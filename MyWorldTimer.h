@@ -38,6 +38,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Timer")
 		inline float GetFinalTimer() { return _finalTimer; }
 
+	UFUNCTION(BlueprintCallable, Category = "Timer")
+		void SpawnBoss();
 
 	UFUNCTION(BlueprintCallable, Category = "Timer")
 		void SetPause(bool pause) { _bPaused = pause; }
@@ -54,19 +56,27 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 		UUserWidget* _BossTimeHUDOverlay;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class AMyEnemy> _enemyAsset;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+		AMyEnemy* _enemy;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
+		class AMyCharacter* _character;
+
+	FTimerHandle _timerHandle;
 	//AMyActorSubClass* MyActor = GetWorld()->SpawnActor<AMyActorSubClass>(AMyActorSubClass::StaticClass());
 
 
-private:
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "timer")
 	float _worldTimer;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "timer")
 	float _bossTimer;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "timer")
 	float _finalTimer;
 
-
+private:
 	bool _bIsFinal;
 
 	bool _bBoss;

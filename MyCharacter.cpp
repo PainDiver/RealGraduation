@@ -1,5 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-// hello chan hyuk
+
 
 #include "MyCharacter.h"
 #include "Camera/CameraComponent.h"
@@ -28,7 +28,6 @@ AMyCharacter::AMyCharacter()
 	_staticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	_staticMesh->SetupAttachment(GetRootComponent());
 
-
 	_baseTurnRate = 65.f;
 	_baseLookUpRate = 65.f;
 
@@ -44,6 +43,7 @@ AMyCharacter::AMyCharacter()
 	_characterMovementComponent->RotationRate = FRotator(0.f, 540.f, 0.f);
 	_characterMovementComponent->JumpZVelocity = 450.f;
 	_characterMovementComponent->AirControl = 0.01f;
+	_characterMovementComponent->MaxWalkSpeed = 500.f;
 
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
