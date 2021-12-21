@@ -8,6 +8,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+
+// test !!!
+
 // Sets default values
 AMyCharacter::AMyCharacter()
 {
