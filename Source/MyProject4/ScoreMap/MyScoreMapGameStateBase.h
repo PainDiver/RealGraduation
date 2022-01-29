@@ -21,8 +21,10 @@ protected:
 	virtual void BeginPlay();
 
 public:
+
 	UFUNCTION(BlueprintCallable, Category = "User Capacity")
-		virtual	int GetNumberOfUser()override;
+	virtual	int GetNumberOfUser()override {return PlayerArray.Num();}
+	
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 		virtual void FindAllPlayerControllerHideAllWidget()override;
@@ -38,12 +40,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 		virtual void OpenAllWidget()override;
 
-	UPROPERTY()
-		uint8 _leastNum;
 
-	uint8 _gameCount;
-
-	bool _bstartable;
 
 
 };

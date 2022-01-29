@@ -16,10 +16,10 @@ public:
 	AMyItem();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-		class USphereComponent* _collisionVolume;
+	class USphereComponent* _collisionVolume;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
-		class UStaticMeshComponent* _mesh;
+	class UStaticMeshComponent* _mesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemProperties")
 		bool _bRotate;

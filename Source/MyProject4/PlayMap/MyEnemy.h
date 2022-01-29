@@ -47,20 +47,14 @@ public:
 		virtual void AttackSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 
-	void SetState(EEnemyMovementStatus state);
-
-	void MoveToTarget(class AMyCharacter* target);
-
-	void Patrol();
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Agro")
-	class USphereComponent* _agroSphere;
+		class USphereComponent* _agroSphere;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attack")
 		class USphereComponent* _attackSphere;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
-	class AMyCharacter* _target;
+		class AMyCharacter* _target;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "StaticMesh")
 		class UStaticMeshComponent* _staticMesh;
@@ -69,17 +63,30 @@ public:
 		int _numOfPatrolPoints;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
-		EEnemyMovementStatus _ems;
+		EEnemyMovementStatus _eMovementStatus;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Respawn")
 		FBox _patrolBox;
 
-	class AAIController* _AIController;
+
+	void SetState(EEnemyMovementStatus state) {_eMovementStatus = state;}
+	
+
+	void SetAIController(class AAIController* aic) { _AIController = aic; }
+	inline AAIController* GetAIController() const { return _AIController; }
+
+
+private:
+
+
+	void MoveToTarget(class AMyCharacter* target);
+
+	void Patrol();
+
+	AAIController* _AIController;
 
 	FVector _targetLocation;
 
 	TArray<FVector> _patrolPoints;
-
-	
 
 };

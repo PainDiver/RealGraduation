@@ -50,21 +50,21 @@ public:
 	EPlatFormType _platformType;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Floor")
-	class UBoxComponent* _BoxComponent;
+	class UBoxComponent* _boxComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor")
 	float _speed;
 
 	UPROPERTY(replicated)
-		FLinearColor _platFormColor;
+	FLinearColor _platFormColor;
+
+private:
 
 	bool _toggle;
 
 	UMaterialInstanceDynamic* _dynamicMatInstance;
 
 	FTimerHandle _timerHandle;
-
-	float _alphaStack;
 
 
 };

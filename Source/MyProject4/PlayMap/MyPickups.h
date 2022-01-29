@@ -43,16 +43,19 @@ public:
 	UFUNCTION(Server, Reliable)
 		void RestoreSelf();
 
+	//Make these into private type later. public for debug
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+		float _effectTime;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
-	float _effectTime;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
-	float _effect;
+		float _effect;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Type")
-	EPickUpType _ept;	
-	
+		EPickUpType _ePickUpType;
+
+
+private:
+
 
 	class AMyCharacter* _character;
 
@@ -62,6 +65,5 @@ public:
 
 	class AMyPlayerState* _playerState;
 
-	class UCharacterMovementComponent* _playerMovementComponent;
 
 };

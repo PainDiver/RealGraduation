@@ -16,7 +16,11 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "../Common/MyWeapon.h"
+#include "GameFrameWork/GameStateBase.h"
+#include "MyCharacterActionComponent.h"
+#include "MyCharacterReplicatorComponent.h"
 
+#include "DrawDebugHelpers.h"
 
 
 
@@ -25,56 +29,53 @@ AMyCharacter::AMyCharacter()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	
+	//Create Instance
+	_replicatorComponent = CreateDefaultSubobject<UMyCharacterReplicatorComponent>(TEXT("ReplicatorComponent"));
+	_actionComponent = CreateDefaultSubobject<UMyCharacterActionComponent>(TEXT("ActionComponent"));
 	_springArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-	_springArm->SetupAttachment(GetRootComponent());
+	_camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	_characterMovementComponent = GetCharacterMovement();
+
+	//collider Set
+	GetCapsuleComponent()->SetCapsuleSize(30.f, 90.f);
+	
+	//control and Camera Setting
 	_springArm->TargetArmLength = 10.f;
 	_springArm->bUsePawnControlRotation = true;
-
-	_spectatorArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpectatorArm"));
-	_spectatorArm->SetupAttachment(GetRootComponent());
-	_spectatorArm->TargetArmLength = 40.f;
-	_spectatorArm->bUsePawnControlRotation = true;
-
-	GetCapsuleComponent()->SetCapsuleSize(30.f, 90.f);
-
-
-	_camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	_camera->SetupAttachment(_springArm, USpringArmComponent::SocketName);
 	_camera->bUsePawnControlRotation = false;
-
-	_baseTurnRate = 65.f;
-	_baseLookUpRate = 65.f;
-
-	_respawn = FVector(0.f, 0.f, 5.f);
+	
+	_characterMovementComponent->bUseControllerDesiredRotation = false;
+	_characterMovementComponent->bOrientRotationToMovement = true;
 
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
-
-
-	_characterMovementComponent = GetCharacterMovement();
-
-	_characterMovementComponent->bUseControllerDesiredRotation = false;
-	_characterMovementComponent->bOrientRotationToMovement = true;
 
 	_characterMovementComponent->RotationRate = FRotator(0.f, 540.f, 0.f);
 	_characterMovementComponent->JumpZVelocity = 700.f;
 	_characterMovementComponent->AirControl = 0.5f;
 	_characterMovementComponent->MaxWalkSpeed = 500.f;
 
-	_characterMovementComponent->SetIsReplicated(true);
+	//Attachment
+	_springArm->SetupAttachment(GetRootComponent());
+	_camera->SetupAttachment(_springArm, USpringArmComponent::SocketName);
+	
 
+	//net
+	_actionComponent->SetIsReplicated(true);
+	_replicatorComponent->SetIsReplicated(true);
+	_characterMovementComponent->SetIsReplicated(false);
+
+	//client
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
+	//custom value
 	_effect = 1.5f;
-
-
-
 
 }
 
-// Called when the game starts or when spawned
+//Called when the game starts or when spawned
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -83,13 +84,75 @@ void AMyCharacter::BeginPlay()
 	{
 		SpawnDefaultWeapon();
 	}
+	InitializeColor();
+	InitializeInstance();
+}
+
+// Called every frame
+void AMyCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+
+	if (!_actionComponent || !_replicatorComponent)
+	{
+		return;
+	}
+
+	FCharacterMoveInfo move = _actionComponent->CreateMove(DeltaTime);
 	
+	if (IsLocallyControlled())
+	{
+		_actionComponent->SimulateMove(move);
+		_actionComponent->ObjectScan();
+		_actionComponent->RespawnCheck();
+	}
+
+
+	if (GetLocalRole() == ROLE_AutonomousProxy)
+	{
+		_replicatorComponent->EnqueueAcknowledgedMove(move);
+		_replicatorComponent->SendMoveToServer(move);
+	}
+	
+
+
+}
+
+//Called to bind functionality to input
+void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMyCharacter::JumpCharacter);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	PlayerInputComponent->BindAction("showCursor", IE_Released, this, &AMyCharacter::ShowCursor);
+
+	PlayerInputComponent->BindAction("Use", IE_Pressed, this, &AMyCharacter::Use);
+
+	PlayerInputComponent->BindAction("Greet", IE_Pressed, this, &AMyCharacter::Greet);
+
+	//PlayerInputComponent->BindAction("Option", IE_Pressed, this, &AMyCharacter::OpenOption);
+
+	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AMyCharacter::Attack);
+
+	PlayerInputComponent->BindAxis("MoveForward", this, &AMyCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &AMyCharacter::MoveRight);
+
+	PlayerInputComponent->BindAxis("Turn", this, &AMyCharacter::Turn);
+	PlayerInputComponent->BindAxis("LookUp", this, &AMyCharacter::LookUp);
+
+}
+
+
+void AMyCharacter::InitializeColor()
+{
 	FTimerHandle delay;
 	GetWorldTimerManager().SetTimer(delay, FTimerDelegate::CreateLambda([&]()
 		{
 			SetColor();
 		}), 2.f, false);
-
 
 	FTimerHandle delay2;
 	GetWorldTimerManager().SetTimer(delay2, FTimerDelegate::CreateLambda([&]()
@@ -97,7 +160,23 @@ void AMyCharacter::BeginPlay()
 			_playerState = GetPlayerState<AMyPlayerState>();
 			SetColor_Multi(_playerState->_CharacterColor);
 		}), 4.f, false);
+}
 
+void AMyCharacter::InitializeInstance()
+{
+	_playerState = Cast<AMyPlayerState>(GetPlayerState());
+}
+
+void AMyCharacter::SaveColor_Implementation(const FLinearColor& color)
+{
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+	_playerState = GetPlayerState<AMyPlayerState>();
+	_playerState->_CharacterColor = color;
+	_playerState->_Initialized = true;
+	GetMesh()->CreateDynamicMaterialInstance(0)->SetVectorParameterValue(TEXT("Color"), color);
 }
 
 void AMyCharacter::SetColor_Implementation()
@@ -107,16 +186,7 @@ void AMyCharacter::SetColor_Implementation()
 	GetMesh()->CreateDynamicMaterialInstance(0)->SetVectorParameterValue(TEXT("Color"), localGameInstance->_characterInfo._characterMesh);
 }
 
-void AMyCharacter::SaveColor_Implementation(FLinearColor color)
-{
-	_playerState = GetPlayerState<AMyPlayerState>();
-	_playerState->_CharacterColor = color;
-	_playerState->_Initialized = true;
-
-	GetMesh()->CreateDynamicMaterialInstance(0)->SetVectorParameterValue(TEXT("Color"), color);
-}
-
-void AMyCharacter::SetColor_Multi_Implementation(FLinearColor color)
+void AMyCharacter::SetColor_Multi_Implementation(const FLinearColor& color)
 {
 	GetMesh()->CreateDynamicMaterialInstance(0)->SetVectorParameterValue(TEXT("Color"), color);
 }
@@ -124,109 +194,92 @@ void AMyCharacter::SetColor_Multi_Implementation(FLinearColor color)
 
 void AMyCharacter::SpawnDefaultWeapon_Implementation()
 {
+	
 	if (!_equippedWeapon)
 	{
 		_equippedWeapon = GetWorld()->SpawnActor<AMyWeapon>(_DefaultWeapon, FVector(0, 0, -500), FRotator(), FActorSpawnParameters());
 		_equippedWeapon->SetInstigator(this);
-		_equippedWeapon->_EweaponState = EWeaponState::EWS_Equip;
+		_equippedWeapon->SetWeaponState(EWeaponState::EWS_Equip);
+		_equippedWeapon->SetWeaponName(EWeaponKind::EWK_Fist);
 		GetMesh()->GetSocketByName("AttackSocket")->AttachActor(_equippedWeapon, GetMesh());
 	}
 }
 
-// Called every frame
-void AMyCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	if (GetActorLocation().Z < -2000)
-	{
-		SetActorLocation(_respawn);
-	}
-
-}
-
-// Called to bind functionality to input
-void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMyCharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	PlayerInputComponent->BindAction("showCursor", IE_Released, this, &AMyCharacter::ShowCursor);
-
-	PlayerInputComponent->BindAction("Use", IE_Pressed, this, &AMyCharacter::UseItem);
-
-	PlayerInputComponent->BindAction("Greet", IE_Pressed, this, &AMyCharacter::Greet);
-
-
-	//PlayerInputComponent->BindAction("Option", IE_Pressed, this, &AMyCharacter::OpenOption);
-
-	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AMyCharacter::Attack);
-
-	PlayerInputComponent->BindAxis("MoveForward", this, &AMyCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AMyCharacter::MoveRight);
-
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("LookUp", this, &AMyCharacter::LookUp);
-
-	PlayerInputComponent->BindAxis("TurnRate", this, &AMyCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("LookUpRate", this, &AMyCharacter::LookUpAtRate);
-
-
-
-}
 
 
 void AMyCharacter::MoveForward(float value)
 {
-
-	FRotator rotation = GetControlRotation();
-	FRotator yawRotation(0.f, rotation.Yaw, 0.f);
-	FVector direction = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::X);
-	AddMovementInput(direction, value);
-
+	if (_actionComponent)
+	{
+		_actionComponent->SetForwardInput(value);
+	}
 }
 
 void AMyCharacter::MoveRight(float value)
 {
-	FRotator rotation = GetControlRotation();
-	FRotator yawRotation(0.f, rotation.Yaw, 0.f);
-	FVector direction = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::Y);
-	AddMovementInput(direction, value);
-
+	if (_actionComponent)
+	{
+		_actionComponent->SetRightInput(value);
+	}
 }
+
 
 void AMyCharacter::LookUp(float value)
 {
-	FRotator baseAimRotator = GetBaseAimRotation();
-
-	if (value >= 0)
+	if (_actionComponent)
 	{
-		if (baseAimRotator.Pitch > -55.f)
-		{
-			AddControllerPitchInput(value);
-		}
+		_actionComponent->SetLookUpInput(value);
 	}
-	else
+}
+
+void AMyCharacter::Turn(float value)
+{
+	if (_actionComponent)
 	{
-		if (baseAimRotator.Pitch < 35.f)
-		{
-			AddControllerPitchInput(value);
-		}
+		_actionComponent->SetRotatingInput(value);
 	}
-
 }
 
-
-void AMyCharacter::TurnAtRate(float rate)
+void AMyCharacter::JumpCharacter()
 {
-	AddControllerYawInput(rate * _baseTurnRate * GetWorld()->GetDeltaSeconds());
+	if (_actionComponent)
+	{
+		_actionComponent->SetJumpInput(true);
+	}
 }
 
-void AMyCharacter::LookUpAtRate(float rate)
+void AMyCharacter::Use()
 {
-	AddControllerPitchInput(rate * _baseLookUpRate * GetWorld()->GetDeltaSeconds());
+	if (_actionComponent)
+	{
+		_actionComponent->SetUseInput(true);
+	}
 }
+
+void AMyCharacter::Attack()
+{
+	if (_actionComponent)
+	{
+		_actionComponent->SetAttackInput(true);
+	}
+}
+
+void AMyCharacter::Greet()
+{
+	if (_actionComponent)
+	{
+		_actionComponent->SetGreetInput(true);
+	}
+}
+
+void AMyCharacter::Ride()
+{
+	if (_actionComponent)
+	{
+		_actionComponent->SetRideInput(true);
+	}
+}
+
 
 void AMyCharacter::ShowCursor()
 {
@@ -240,66 +293,10 @@ void AMyCharacter::ShowCursor()
 	{
 		controller->bShowMouseCursor = true;
 	}
-
-}
-
-void AMyCharacter::Respawn_Implementation()
-{
-	SetActorLocation(_respawn);
+	
 }
 
 
-void AMyCharacter::UseItem_Implementation()
-{
-	_playerState = Cast<AMyPlayerState>(GetPlayerState());
-	if (_playerState->_Inventory.Num() == 0)
-		return;
-
-	AMyPickups* item = _playerState->_Inventory.Pop();
-
-	if (item)
-	{
-		item->Activate();
-	}
-}
 
 
-void AMyCharacter::Attack_Implementation()
-{
-	if (_characterMovementComponent->IsFalling() || _IsAttacking)
-	{
-		return;
-	}
-	_characterMovementComponent->MaxWalkSpeed = 200;
-	_IsAttacking = true;
 
-}
-
-void AMyCharacter::Greet_Implementation()
-{
-	_characterMovementComponent = GetCharacterMovement();
-	if (_characterMovementComponent->IsFalling()||_IsAttacking || _IsGreeting)
-	{
-		return;
-	}
-	_characterMovementComponent->MaxWalkSpeed = 200;
-
-	UE_LOG(LogTemp, Warning, TEXT("greeting"));
-	_IsGreeting = true;
-}
-
-
-void AMyCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(AMyCharacter, _IsAttacking);
-	DOREPLIFETIME(AMyCharacter, _IsGreeting);
-}
-
-//void AMyCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
-//{
-//	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-//
-//	DOREPLIFETIME(AMyCharacter, _itemOn);
-//}

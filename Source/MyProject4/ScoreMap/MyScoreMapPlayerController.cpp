@@ -55,11 +55,11 @@ void AMyScoreMapPlayerController::Initialize()
 
 	if (IsLocalPlayerController())
 	{
-		if (_gameInstance->_ChattingHUDAsset)
+		if (_gameInstance->_chattingHUDAsset)
 		{
 			if (!_ChattingHUDOverlay)
 			{
-				_ChattingHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_ChattingHUDAsset);
+				_ChattingHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_chattingHUDAsset);
 				_ChattingHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
 				_chatBox = Cast<UEditableText>(_ChattingHUDOverlay->GetWidgetFromName(FName("chattingBox")));
 				_scrollbox = Cast<UScrollBox>(_ChattingHUDOverlay->GetWidgetFromName(FName("Scroller")));
@@ -67,11 +67,11 @@ void AMyScoreMapPlayerController::Initialize()
 				_chattingPannel = _ChattingHUDOverlay->GetRootWidget();
 			}
 		}
-		if (_gameInstance->_ScoreHUDAsset)
+		if (_gameInstance->_scoreHUDAsset)
 		{
 			if (!_ScoreHUDOverlay)
 			{
-				_ScoreHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_ScoreHUDAsset);
+				_ScoreHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_scoreHUDAsset);
 				_ScoreHUDOverlay->SetVisibility(ESlateVisibility::Visible);
 				_WinnerScrollBox = Cast<UScrollBox>(_ScoreHUDOverlay->GetWidgetFromName(FName("WinnerScrollBox")));
 				_ScoreHUDOverlay->AddToViewport();

@@ -11,6 +11,7 @@ AMyPlayerState::AMyPlayerState()
 	_IsSpectating = false;
 	_IsFirst = false;
 	_Initialized = false;
+	_allMightyMode = false;
 }
 
 
@@ -32,6 +33,8 @@ void AMyPlayerState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Out
 	DOREPLIFETIME(AMyPlayerState, _CharacterName);
 	DOREPLIFETIME(AMyPlayerState, _CharacterColor);
 	DOREPLIFETIME(AMyPlayerState, _Initialized);
+	DOREPLIFETIME(AMyPlayerState, _allMightyMode);
+
 }
 
 

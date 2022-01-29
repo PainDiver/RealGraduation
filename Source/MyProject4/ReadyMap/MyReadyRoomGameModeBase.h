@@ -29,8 +29,7 @@ public:
 	virtual APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage);
 
 	virtual void Logout(AController* Exiting);
-	
-	virtual void InitSeamlessTravelPlayer(AController* NewController)override;
+
 
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room Capacity")

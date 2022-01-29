@@ -63,8 +63,3 @@ void AMyReadyRoomGameModeBase::Logout(AController* Exiting)
 	//_userNum--;
 	
 }
-
-void AMyReadyRoomGameModeBase::InitSeamlessTravelPlayer(AController* newController)
-{
-	Super::InitSeamlessTravelPlayer(newController);
-}

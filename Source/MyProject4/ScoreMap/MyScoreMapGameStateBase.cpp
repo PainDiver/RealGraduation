@@ -13,9 +13,7 @@
 AMyScoreMapGameStateBase::AMyScoreMapGameStateBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	_gameCount = 0;
-	_leastNum = 3;
-	_bstartable = false;
+
 }
 
 void AMyScoreMapGameStateBase::BeginPlay()
@@ -24,10 +22,6 @@ void AMyScoreMapGameStateBase::BeginPlay()
 
 }
 
-int AMyScoreMapGameStateBase::GetNumberOfUser()
-{
-	return PlayerArray.Num();
-}
 
 
 void AMyScoreMapGameStateBase::FindAllPlayerControllerHideAllWidget_Implementation()

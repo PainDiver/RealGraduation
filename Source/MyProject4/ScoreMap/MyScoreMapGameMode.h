@@ -17,17 +17,15 @@ class MYPROJECT4_API AMyScoreMapGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
-
 protected:
 	virtual void BeginPlay() override;
+
 public:
 	AMyScoreMapGameMode();
 
 	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage);
 
 	virtual APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage);
-
-	virtual void InitSeamlessTravelPlayer(AController* NewController)override;
 
 	class AMyScoreMapGameStateBase* _gameState;
 	

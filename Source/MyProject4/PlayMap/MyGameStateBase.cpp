@@ -21,27 +21,16 @@ AMyGameStateBase::AMyGameStateBase()
 void AMyGameStateBase::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 }
-
-void AMyGameStateBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(AMyGameStateBase, _finalTimer);
-	DOREPLIFETIME(AMyGameStateBase, _StartTimer);
-}
-
 
 void AMyGameStateBase::NotifyFin_Implementation()
 {
 	TArray<AActor*> outactors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMyWorldTimer::StaticClass(), outactors);
 	
-
 	TArray<AActor*> trivialActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), trivialActors);
-
 
 	for (auto playerController : outactors)
 	{
@@ -59,39 +48,38 @@ void AMyGameStateBase::NotifyFin_Implementation()
 		{
 			pc->_SpectateHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
 		}
+		
 	}
-
 	for (auto actor : trivialActors)
 	{
 		actor->SetActorTickEnabled(false);
 		actor->GetWorldTimerManager().ClearAllTimersForObject(actor);
 	}
 
-	NotifyFin_Net();
+	NotifyFin_Client();
 }
 
-void AMyGameStateBase::NotifyFin_Net_Implementation()
+void AMyGameStateBase::NotifyFin_Client_Implementation()
 {
-	AMyWorldTimer* pc = Cast<AMyWorldTimer>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-	pc->GetWorldTimerManager().ClearAllTimersForObject(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-	if (pc->_inventoryHUDOverlay)
+	for (auto ps : PlayerArray)
 	{
-		pc->_inventoryHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
-	}
-	if (pc->_FinalTimerHUDOverlay)
-	{
-		pc->_FinalTimerHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
-	}
-	if (pc->_SpectateHUDOverlay)
-	{
-		pc->_SpectateHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
-	}
-
-	TArray<AActor*> trivialActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), trivialActors);
-	for (auto actor : trivialActors)
-	{
-		actor->SetActorTickEnabled(false);
+		AMyWorldTimer* pc = Cast<AMyWorldTimer>(ps->GetPawn()->GetController());
+		if (pc)
+		{
+			pc->GetWorldTimerManager().ClearAllTimersForObject(pc);
+			if (pc->_inventoryHUDOverlay)
+			{
+				pc->_inventoryHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
+			}
+			if (pc->_FinalTimerHUDOverlay)
+			{
+				pc->_FinalTimerHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
+			}
+			if (pc->_SpectateHUDOverlay)
+			{
+				pc->_SpectateHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
+			}
+		}
 	}
 }
 
@@ -111,4 +99,13 @@ void AMyGameStateBase::LetPlayerMove_Client_Implementation()
 		if(ps->GetOwner<APlayerController>())
 			ps->GetOwner<APlayerController>()->SetInputMode(FInputModeGameOnly());
 	}
+}
+
+
+void AMyGameStateBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AMyGameStateBase, _finalTimer);
+	DOREPLIFETIME(AMyGameStateBase, _StartTimer);
 }

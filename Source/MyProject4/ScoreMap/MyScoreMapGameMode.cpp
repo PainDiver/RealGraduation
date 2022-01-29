@@ -58,8 +58,3 @@ APlayerController* AMyScoreMapGameMode::Login(UPlayer* NewPlayer, ENetRole InRem
 		return Super::Login(NewPlayer, InRemoteRole, Options, Portal, UniqueId, ErrorMessage);
 	}
 }
-
-void AMyScoreMapGameMode::InitSeamlessTravelPlayer(AController* NewController)
-{
-	Super::InitSeamlessTravelPlayer(NewController);
-}

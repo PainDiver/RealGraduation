@@ -16,6 +16,13 @@ enum class EWeaponState :uint8
 
 };
 
+UENUM(BlueprintType)
+enum class EWeaponKind :uint8
+{
+	EWK_Fist UMETA(DisplayName = "Fist"),
+	EWK_MAX UMETA(DisplayName = "DefaultMax")
+};
+
 
 UCLASS()
 class MYPROJECT4_API AMyWeapon : public AMyItem
@@ -39,20 +46,33 @@ public:
 	//virtual void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)override;
 
 	UFUNCTION()
-	void CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+		void CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	UFUNCTION(Server,Reliable)
-	void LaunchServer(AActor* OtherActor);
-
+	UFUNCTION(Server, Reliable)
+		void LaunchServer(AActor* OtherActor,const EWeaponKind& kind);
+	
 	void Equip(class AMyCharacter* character);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item | Combat")
-		class UBoxComponent* _combatCollision;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
-		EWeaponState _EweaponState;
+	void SetWeaponName(EWeaponKind kind) { _eWeaponName = kind; }
+	inline EWeaponKind GetWeaponName()const { return _eWeaponName; }
+
+	void SetWeaponState(EWeaponState state) {_eWeaponState = state; }
+	inline EWeaponState GetWeaponState()const { return _eWeaponState; }
+
+
+protected:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item | Combat")
+	class UBoxComponent* _combatCollision;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SkeletalMesh")
-		class USkeletalMeshComponent* _skeletalMesh;
+	class USkeletalMeshComponent* _skeletalMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
+	EWeaponState _eWeaponState;
+
+	UPROPERTY(VisibleAnywhere)
+	EWeaponKind _eWeaponName;
 
 };

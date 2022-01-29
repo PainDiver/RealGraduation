@@ -28,13 +28,10 @@ public:
 
 	virtual void SetupInputComponent() override;
 
-	void Initialize();
-
+	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Chatting")
 	void commit(const FString& message);
 	virtual void commit_Implementation(const FString& message);
-
-	virtual void ShowChattingPannel();
 
 	UFUNCTION(BlueprintCallable, Category = "Chat")
 		virtual void ShowChatBox();
@@ -55,6 +52,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 	UUserWidget* _StartHUDOverlay;
 
+
+	FTimerHandle _timerHandle;
+
+	FTimerHandle _timerHandle2;
+
+private:
+	void Initialize();
+
+	virtual void ShowChattingPannel();
+
+
 	class AReadyRoomGameStateBase* _gameState;
 
 	class UMyGameInstance* _gameInstance;
@@ -70,7 +78,4 @@ public:
 	class UScrollBox* _scrollbox;
 	
 	FString _messageSent;
-
-	FTimerHandle _timerHandle;
-	FTimerHandle _timerHandle2;
 };

@@ -49,7 +49,10 @@ void AMyProject4GameModeBase::BeginPlay()
 void AMyProject4GameModeBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	CountTime(DeltaTime);
+
+	CountEnemyTimer(DeltaTime);
+	CountFinalTimer(DeltaTime);
+	CountStartTimer(DeltaTime);
 }
 
 
@@ -84,10 +87,8 @@ void AMyProject4GameModeBase::Logout(AController* Exiting)
 }
 
 
-
-void AMyProject4GameModeBase::CountTime(float DeltaTime)
+void AMyProject4GameModeBase::CountEnemyTimer(const float& DeltaTime)
 {
-
 	if (_bBoss)
 	{
 		_bossTimer -= DeltaTime;
@@ -98,12 +99,31 @@ void AMyProject4GameModeBase::CountTime(float DeltaTime)
 			_bBoss = false;
 		}
 	}
+}
 
+void AMyProject4GameModeBase::CountStartTimer(const float& DeltaTime)
+{
+	if (!_bIsStarted)
+	{
+		_StartTimer -= DeltaTime;
+		if (_gameState)
+		{
+			_gameState->_StartTimer = _StartTimer;
+			if (_StartTimer < 0)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("%f"), _StartTimer);
+				_gameState->LetPlayerMove();
+				_bIsStarted = true;
+			}
+		}
+	}
+}
+
+void AMyProject4GameModeBase::CountFinalTimer(const float& DeltaTime)
+{
 	if (_bIsFinal)
 	{
-
 		_finalTimer -= DeltaTime;
-
 		_gameState->_finalTimer = _finalTimer;
 		if (_finalTimer < 0)
 		{
@@ -116,24 +136,6 @@ void AMyProject4GameModeBase::CountTime(float DeltaTime)
 			_gameState->NotifyFin();
 		}
 	}
-
-
-	if (!_bIsStarted)
-	{
-		_StartTimer -= DeltaTime;
-		_gameState = GetGameState<AMyGameStateBase>();
-		if (_gameState)
-		{
-			_gameState->_StartTimer = _StartTimer;
-			if (_StartTimer < 0)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("%f"), _StartTimer);
-				_gameState->LetPlayerMove();
-				_bIsStarted = true;			
-			}
-		}
-	}
-
 }
 
 
@@ -147,14 +149,13 @@ void AMyProject4GameModeBase::SpawnBoss()
 
 		AActor* enemyClass = GetWorld()->SpawnActor<AActor>(_enemyAsset, _AIRespawnPoint, FRotator(0.f), SpawnParams);
 		_enemy = Cast<AMyEnemy>(enemyClass);
-
 		if (_enemy)
 		{
 			_enemy->SpawnDefaultController();
 			AAIController* AICon = Cast<AAIController>(_enemy->GetController());
 			if (AICon)
 			{
-				_enemy->_AIController = AICon;
+				_enemy->SetAIController(AICon);
 			}
 		}
 	}

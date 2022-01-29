@@ -5,7 +5,7 @@
 #include "OnlineSessionSettings.h"
 
 
-const static FName SESSION_NAME = TEXT("MySessionGame");
+const static FName SESSION_NAME = TEXT("TwistRunGame");
 const static uint8 MAX_PLAYER = 8;
 
 
@@ -26,7 +26,6 @@ void UMyGameInstance::Init()
 		}
 	}
 
-
 	if (GEngine != nullptr)
 	{
 		GEngine->OnNetworkFailure().AddUObject(this, &UMyGameInstance::OnNetworkFailure);
@@ -34,11 +33,11 @@ void UMyGameInstance::Init()
 
 }
 
-void UMyGameInstance::Host(bool LanCheck)
+void UMyGameInstance::Host(const bool& LanCheck)
 {
 	if (_sessionInterface.IsValid())
 	{
-		_LanCheck = LanCheck;
+		_lanCheck = LanCheck;
 		auto existingSession = _sessionInterface->GetNamedSession(SESSION_NAME);
 		if (existingSession != nullptr)
 		{
@@ -58,7 +57,7 @@ void UMyGameInstance::CreateSession()
 	if (_sessionInterface.IsValid())
 	{
 		FOnlineSessionSettings sessionSettings;
-		sessionSettings.bIsLANMatch = _LanCheck;
+		sessionSettings.bIsLANMatch = _lanCheck;
 		sessionSettings.NumPublicConnections = MAX_PLAYER;
 		sessionSettings.bShouldAdvertise = true;
 		sessionSettings.bUseLobbiesIfAvailable = true;
@@ -123,7 +122,7 @@ TArray<FSessionInfo> UMyGameInstance::GetSessions()
 
 
 
-void UMyGameInstance::SelectSession(int index)
+void UMyGameInstance::SelectSession(const int& index)
 {
 	_selectedIndex=index;
 }
@@ -178,8 +177,7 @@ void UMyGameInstance::OnJoinSessionComplete(FName sessionName, EOnJoinSessionCom
 	}
 	if (GEngine)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, address);
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, FString::FromInt(static_cast<int>(result)));
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, FString("Joining :")+address);
 	}
 	APlayerController* playerController = GetFirstLocalPlayerController();
 	if (!ensure(playerController != nullptr))

@@ -43,38 +43,18 @@ public:
 	UFUNCTION(Server, BlueprintCallable,Reliable)
 	void NotifyArrival();
 	
-	
-
 	UFUNCTION(Server, Unreliable)
 	void Spectate();
 
 	UFUNCTION(Server, Unreliable)
 	void ChangeView();
 
-	UFUNCTION(Server, Reliable)
-		void AllMightyMode();
-
-
 	UFUNCTION(Server, Unreliable)
 	void UpdateHUD();
 
 
-	UFUNCTION(Client, Unreliable)
-		void BrushSockets(int index, uint8 ept);
-
-	UFUNCTION(Client, Unreliable)
-		void ClearSockets(int index);
-
-	UFUNCTION(Client, Unreliable)
-		void TurnOnSpectateUI();
-
-	UFUNCTION(Client, Unreliable)
-		void TurnOnFinalTimerUI();
-
 	UFUNCTION(Server, Unreliable)
 		void SetCharacterName(const FString& name);
-
-
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
@@ -102,9 +82,49 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 		class AMyCharacter* _character;
 
+private:
+
+	UFUNCTION(Client, Reliable)
+		void ChangeBindAction_AllMighty();
+
+	UFUNCTION(Client, Reliable)
+		void ChangeBindAction_Spectate();
+
+	UFUNCTION(Client, Unreliable)
+		void BrushSockets(int index, uint8 ept);
+
+	UFUNCTION(Client, Unreliable)
+		void ClearSockets(int index);
+
+	UFUNCTION(Client, Unreliable)
+		void TurnOnSpectateUI();
+
+	UFUNCTION(Client, Unreliable)
+		void TurnOnFinalTimerUI();
+
+	void InitializeInstance();
+
+	void InitializeHUD();
+
+	void EnsureFirstCall();
+
+	void SaveWinnerInfo();
+
+
+	void AllMightyMode();
+
+	void SpectateMode();
+
+	void NotifyFinalCountToAllClients();
+
+
+	void MoveForward_AllMighty(float value);
+
+	void MoveRight_AllMighty(float value);
+
+
 
 	TArray<APlayerState*> _playerArray;
-
 
 	AController* _previous;
 

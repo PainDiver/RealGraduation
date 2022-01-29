@@ -25,8 +25,7 @@ AMyWeapon::AMyWeapon()
 	_combatCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	_combatCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 
-	_EweaponState = EWeaponState::EWS_Pickup;
-
+	_eWeaponState = EWeaponState::EWS_Pickup;
 }
 
 // Called when the game starts or when spawned
@@ -46,19 +45,29 @@ void AMyWeapon::Tick(float DeltaTime)
 
 void AMyWeapon::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	//in case of Fist
 	if (OtherActor && OtherActor!=GetInstigator())
 	{
-		LaunchServer(OtherActor);
+		LaunchServer(OtherActor,_eWeaponName);
 	}
 }
 
-void AMyWeapon::LaunchServer_Implementation(AActor* OtherActor)
+void AMyWeapon::LaunchServer_Implementation(AActor* OtherActor,const EWeaponKind& kind)
 {
-	APawn* pawn = Cast<APawn>(OtherActor);
-	FVector dir{ pawn->GetActorLocation() - GetActorLocation()};
-	dir.Normalize();
-	pawn->LaunchPawn(dir * 700, false, true);
+	switch (kind)
+	{
+	case EWeaponKind::EWK_Fist:
+	{	
+		AMyCharacter* pawn = Cast<AMyCharacter>(OtherActor);
+		if (pawn)
+		{
+			FVector dir{ pawn->GetActorLocation() - GetActorLocation() };
+			dir.Normalize();
+			pawn->LaunchPawn(dir * 700, false, true);
+		}
+	}
+	default:
+		break;
+	}
 }
 
 

@@ -16,7 +16,7 @@
 USTRUCT(Atomic, BlueprintType)
 struct FCharacterInfo
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
 public:
 
@@ -34,7 +34,7 @@ public:
 USTRUCT(Atomic, BlueprintType)
 struct FSessionInfo
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
 public:
 
@@ -60,7 +60,7 @@ public:
 	virtual void Init();
 
 	UFUNCTION(BlueprintCallable, Category = "Session")
-	void Host(bool LanCheck);
+	void Host(const bool& LanCheck);
 	
 	UFUNCTION(BlueprintCallable, Category = "Session")
 	void Join();
@@ -72,13 +72,56 @@ public:
 	void CreateSession();
 
 	UFUNCTION(BlueprintCallable,Category = "Session")
-	void SelectSession(int index);
-
+	void SelectSession(const int& index);
 
 	UFUNCTION(BlueprintCallable,Category = "Session")
 	TArray<FSessionInfo> GetSessions();
 
 
+	//UI Resources
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _readyHUDAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _chattingHUDAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _startHUDAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _inventoryHUDAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _spectateHUDAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _finalTimerHUDAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _scoreHUDAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _startTimerHUDAsset;
+
+
+	//In Game Values
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
+	bool _gameStarted;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
+	FCharacterInfo _characterInfo;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
+	TArray<FCharacterInfo> _winner;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
+	TArray<FSessionInfo> _sessionInfo;
+
+
+private:
+	//callback for server hosting, joining, destroying
 	void OnCreateSessionComplete(FName sessionName, bool success);
 
 	void OnDestroySessionComplete(FName sessionName, bool success);
@@ -90,56 +133,12 @@ public:
 	void OnNetworkFailure(UWorld* world, UNetDriver* netDriver, ENetworkFailure::Type failureType, const FString& error);
 
 	
-	
 	TSharedPtr<class FOnlineSessionSearch> _sessionSearch;
 
 	IOnlineSessionPtr _sessionInterface;
 
 	TOptional<int> _selectedIndex;
 
-	bool _LanCheck;
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	TSubclassOf<class UUserWidget> _ReadyHUDAsset;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	TSubclassOf<class UUserWidget> _ChattingHUDAsset;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-	TSubclassOf<class UUserWidget> _StartHUDAsset;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-		TSubclassOf<class UUserWidget> _inventoryHUDAsset;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-		TSubclassOf<class UUserWidget> _SpectateHUDAsset;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-		TSubclassOf<class UUserWidget> _FinalTimerHUDAsset;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-		TSubclassOf<class UUserWidget> _ScoreHUDAsset;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-		TSubclassOf<class UUserWidget> _StartTimerHUDAsset;
-
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
-		bool _gameStarted;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category ="GameInfo")
-	FCharacterInfo _characterInfo;
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
-		TArray<FCharacterInfo> _winner;
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
-		TArray<FSessionInfo> _sessionInfo;
-
-
+	bool _lanCheck;
 
 };

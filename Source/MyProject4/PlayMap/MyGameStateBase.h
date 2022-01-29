@@ -29,8 +29,8 @@ public:
 	UFUNCTION(Server,Reliable)
 	void NotifyFin();
 
-	UFUNCTION(NetMulticast, Reliable)
-	void NotifyFin_Net();
+	UFUNCTION(Client, Reliable)
+	void NotifyFin_Client();
 
 	UFUNCTION(Server, Reliable)
 		void LetPlayerMove();

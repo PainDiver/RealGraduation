@@ -10,12 +10,12 @@
 #include "ReadyRoomPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
+const static uint8 MIN_PLAYER = 2;
+
 AReadyRoomGameStateBase::AReadyRoomGameStateBase()
 {
 	PrimaryActorTick.bCanEverTick=true;
-	_gameCount = 0;
-	_leastNum = 3;
-	_bstartable = false;
+	_bIsStartable = false;
 }
 
 void AReadyRoomGameStateBase::BeginPlay()
@@ -27,17 +27,19 @@ void AReadyRoomGameStateBase::BeginPlay()
 void AReadyRoomGameStateBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (PlayerArray.Num() >= _leastNum)
-		_bstartable = true;
+	if (PlayerArray.Num() >= MIN_PLAYER)
+	{
+		if (_bIsStartable == false)
+			_bIsStartable = true;
+	}
 	else
-		_bstartable = false;
-
+	{
+		if (_bIsStartable == true)
+			_bIsStartable = false;
+	}
 }
 
-int AReadyRoomGameStateBase::GetNumberOfUser()
-{
-	return PlayerArray.Num();
-}
+
 
 void AReadyRoomGameStateBase::FindAllPlayerControllerHideAllWidget_Implementation()
 {

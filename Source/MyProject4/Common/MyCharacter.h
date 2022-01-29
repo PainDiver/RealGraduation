@@ -6,14 +6,19 @@
 #include "GameFramework/Character.h"
 #include "MyCharacter.generated.h"
 
+
 UCLASS()
 class MYPROJECT4_API AMyCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
+
+
 public:
 	// Sets default values for this character's properties
 	AMyCharacter();
+
+	friend class UMyCharacterActionComponent;
 
 protected:
 	// Called when the game starts or when spawned
@@ -27,86 +32,107 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	UFUNCTION(Server, Unreliable)
-		void Respawn();
+	
+	//Initial Function
+	
+	UFUNCTION(Server, Reliable)
+	void SpawnDefaultWeapon();
 
 	UFUNCTION(Server, Reliable)
-		void UseItem();
+		void SaveColor(const FLinearColor& color);
 
-	UFUNCTION(Server, Reliable)
-		void Attack();
-
-	UFUNCTION(Server, Reliable)
-		void Greet();
-
-	UFUNCTION(Server,Reliable)
-		void SpawnDefaultWeapon();
-
-	UFUNCTION(Client, Unreliable)
+	UFUNCTION(Client, Reliable)
 		void SetColor();
 
-	UFUNCTION(Server, Unreliable)
-		void SaveColor(FLinearColor color);
-
-	UFUNCTION(NetMulticast, Unreliable)
-		void SetColor_Multi(FLinearColor color);
+	UFUNCTION(NetMulticast, Reliable)
+		void SetColor_Multi(const FLinearColor& color);
 
 
 
+	//setter getter
+	UFUNCTION(BlueprintCallable)
+	void SetActionComponent(class UMyCharacterActionComponent* ac) {_actionComponent = ac;}
+	
+	UFUNCTION(BlueprintCallable)
+	inline UMyCharacterActionComponent* GetActionComponent()const {return _actionComponent;}
+	
+	UFUNCTION(BlueprintCallable)
+	void SetCharacterMovementComponent(UCharacterMovementComponent* mc) {_characterMovementComponent = mc;}
+	
+	UFUNCTION(BlueprintCallable)
+	inline UCharacterMovementComponent* GetCharacterMovementComponent()const {return _characterMovementComponent;}
+	
+	UFUNCTION(BlueprintCallable)
+	void SetPlayerState(class AMyPlayerState* ps) {_playerState = ps;}
+	
+	UFUNCTION(BlueprintCallable)
+	inline AMyPlayerState* GetMyPlayerState()const {return _playerState;}
 
+
+
+
+// public UPROPERTY
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAceess = "true"), Category = Camera)
+	class UCameraComponent* _camera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Camera)
+	class USpringArmComponent* _springArm;
+
+
+private:
+
+	void InitializeColor();
+
+	void InitializeInstance();
+
+	// Movement Function
 	void MoveForward(float value);
 
 	void MoveRight(float value);
 
 	void LookUp(float value);
 
-	void TurnAtRate(float rate);
+	void Turn(float value);
 
-	void LookUpAtRate(float rate);
+	void JumpCharacter();
+
+	void Use();
+
+	void Attack();
+
+	void Greet();
+
+	void Ride();
 
 	void ShowCursor();
 
-	
 
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAceess = "true"))
-	class UCameraComponent* _camera;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* _springArm;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		class USpringArmComponent* _spectatorArm;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera)
-	float _baseTurnRate;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-	float _baseLookUpRate;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
-	FVector _respawn;
-
-	UPROPERTY(replicated,BlueprintReadWrite, Category = "Animation")
-	bool _IsAttacking;
-
-	UPROPERTY(replicated, BlueprintReadWrite, Category = "Animation")
-		bool _IsGreeting;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	//Initial Value
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Attack")
 	TSubclassOf<class AMyWeapon> _DefaultWeapon;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Attack")
 	AMyWeapon* _equippedWeapon;
 
-	class AMyPlayerState* _playerState;
 
+	//In Game Value
 	float _effect;
 
-	class UCharacterMovementComponent* _characterMovementComponent;
-	
 	FTimerHandle _timerHandle;
 
+	AActor* _target;
+
+	AMyPlayerState* _playerState;
+
+
+
+
+
+	//Components
+	UMyCharacterActionComponent* _actionComponent;
+
+	class UMyCharacterReplicatorComponent* _replicatorComponent;
+
+	UCharacterMovementComponent* _characterMovementComponent;
 	
 };

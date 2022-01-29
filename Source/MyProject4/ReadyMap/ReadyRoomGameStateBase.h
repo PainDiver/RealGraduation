@@ -25,9 +25,6 @@ protected:
 public:
 	virtual void Tick(float DeltaTime);
 
-	UFUNCTION(BlueprintCallable, Category = "User Capacity")
-		virtual	int GetNumberOfUser()override;
-
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 		virtual void FindAllPlayerControllerHideAllWidget()override;
 
@@ -40,11 +37,14 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 		virtual void OpenAllWidget()override;
 
-	UPROPERTY()
-		uint8 _leastNum;
+	UFUNCTION(BlueprintCallable, Category = "User Capacity")
+	virtual	int GetNumberOfUser()override { return PlayerArray.Num(); };
 
-	uint8 _gameCount;
+	UFUNCTION(BlueprintCallable)
+	inline bool GetIsStartable() const{ return _bIsStartable; }
 
-	bool _bstartable;
+private:
+
+	bool _bIsStartable;
 
 };

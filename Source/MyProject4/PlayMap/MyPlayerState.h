@@ -42,4 +42,8 @@ public:
 	UPROPERTY(replicated)
 		bool _Initialized;
 
+	UPROPERTY(replicated)
+		bool _allMightyMode;
+
+
 };

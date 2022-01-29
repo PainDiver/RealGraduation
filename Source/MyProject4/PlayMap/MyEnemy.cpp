@@ -28,7 +28,7 @@ AMyEnemy::AMyEnemy()
 
 	_numOfPatrolPoints = 25;
 
-	_ems = EEnemyMovementStatus::EMS_Idle;
+	_eMovementStatus = EEnemyMovementStatus::EMS_Idle;
 
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 }
@@ -68,7 +68,7 @@ void AMyEnemy::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 
-	switch (_ems)
+	switch (_eMovementStatus)
 	{
 		case EEnemyMovementStatus::EMS_Idle:
 		{
@@ -176,8 +176,4 @@ void AMyEnemy::Patrol()
 	}
 }
 
-void AMyEnemy::SetState(EEnemyMovementStatus state)
-{
-	_ems = state;
-}
 

@@ -6,6 +6,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFrameWork/GameStateBase.h"
 
 // Sets default values
 AMyPlatForm::AMyPlatForm()
@@ -15,18 +16,18 @@ AMyPlatForm::AMyPlatForm()
 
 	_platformType = EPlatFormType::EPF_RotatingPlatform;
 
-	_BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Box"));
-	RootComponent = _BoxComponent;
+	_boxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Box"));
+	RootComponent = _boxComponent;
 
 	_staticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	_staticMesh->SetupAttachment(GetRootComponent());
 
 	_toggle = false;
 	_speed = 20.f;
-	//_BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	//_BoxComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
-	//_BoxComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	//_BoxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	//_boxComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	//_boxComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
+	//_boxComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	//_boxComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 
 }
 
@@ -38,6 +39,7 @@ void AMyPlatForm::BeginPlay()
 	_dynamicMatInstance->GetMaterial()->GetVectorParameterValue(TEXT("Color"), _platFormColor);
 
 	GetWorldTimerManager().SetTimer(_timerHandle, this, &AMyPlatForm::TurnOnToggle, 5.f, true, 5.0f);
+	
 }
 
 // Called every frame
@@ -64,14 +66,12 @@ void AMyPlatForm::Transform_Implementation(float DeltaTime)
 
 	case EPlatFormType::EPF_TranslatingPlatform:
 	{
-		FVector vec = GetActorLocation();
 		FVector dx(_speed * DeltaTime, 0, 0);
 		if (_toggle)
 		{
 			dx = -dx;
 		}
-
-		SetActorLocation(vec + dx);
+		AddActorWorldOffset(dx);
 		break;
 	}
 

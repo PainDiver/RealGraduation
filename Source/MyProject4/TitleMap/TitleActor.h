@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
 #include "TitleActor.generated.h"
 
+
 UCLASS()
-class MYPROJECT4_API ATitleActor : public AActor
+class MYPROJECT4_API ATitleActor : public APawn
 {
 	GENERATED_BODY()
 	
@@ -19,9 +20,15 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void Tick(float DeltaTime) override;
+
 public:	
 	// Called every frame
 	//virtual void Tick(float DeltaTime) override;
+
+	void JumpOnTime();
+
+
 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "staticMesh")
@@ -33,12 +40,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Force")
 	float time;
 
-
+private:
 	FTimerHandle _timerHandle;
-
-
-
-	void JumpOnTime();
-
 	
 };

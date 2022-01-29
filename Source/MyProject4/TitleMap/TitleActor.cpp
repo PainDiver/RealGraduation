@@ -3,6 +3,7 @@
 
 #include "TitleActor.h"
 #include "Components/StaticMeshComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ATitleActor::ATitleActor()
@@ -11,6 +12,7 @@ ATitleActor::ATitleActor()
 	PrimaryActorTick.bCanEverTick = true;
 	_staticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	_staticMesh->SetupAttachment(GetRootComponent());
+
 }
 
 // Called when the game starts or when spawned
@@ -18,12 +20,18 @@ void ATitleActor::BeginPlay()
 {
 	Super::BeginPlay();
 	GetWorldTimerManager().SetTimer(_timerHandle, this, &ATitleActor::JumpOnTime, time, true, 2.f);
+	
 }
+
+void ATitleActor::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+
 
 void ATitleActor::JumpOnTime()
 {
-	if (HasAuthority())
-	{
-		_staticMesh->AddForce(FVector(0, 0, Force));
-	}
+	_staticMesh->AddForce(FVector(0, 0, Force));
 }
+

@@ -22,9 +22,9 @@ void AMyPickups::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (_ept == EPickUpType::EPT_Random)
+	if (_ePickUpType == EPickUpType::EPT_Random)
 	{
-		_ept = static_cast<EPickUpType>(FMath::RandRange(0, static_cast<int32>(EPickUpType::EPT_MAX) - 2));
+		_ePickUpType = static_cast<EPickUpType>(FMath::RandRange(0, static_cast<int32>(EPickUpType::EPT_MAX) - 2));
 	}
 }
 
@@ -65,7 +65,7 @@ void AMyPickups::Activate_Implementation()
 {
 	_character = GetOwner<AMyCharacter>();
 
-	switch (_ept)
+	switch (_ePickUpType)
 	{
 	case EPickUpType::EPT_Booster:
 	{
@@ -88,7 +88,7 @@ void AMyPickups::RestoreSelf_Implementation()
 {
 	_character = GetOwner<AMyCharacter>();
 
-	switch (_ept)
+	switch (_ePickUpType)
 	{
 	case EPickUpType::EPT_Booster:
 	{

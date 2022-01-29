@@ -23,18 +23,6 @@ public:
 
 	virtual void Tick(float DeltaTime);
 
-
-	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)override;
-
-	virtual APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)override;
-
-	virtual void Logout(AController* Exiting)override;
-
-	void CountTime(float DeltaTime);
-
-	UFUNCTION(BlueprintCallable, Category = "Timer")
-		void SpawnBoss();
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asset")
 		TSubclassOf<class AMyEnemy> _enemyAsset;
 
@@ -47,12 +35,34 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIRespawn")
 		FVector _AIRespawnPoint;
 
-	
+	UFUNCTION(BlueprintCallable)
+	void SetIsFinal(const bool& Final) { _bIsFinal = Final; }
 
-	
+	UFUNCTION(BlueprintCallable)
+	inline bool GetIsFinal() { return _bIsFinal; }
+
+	UFUNCTION(BlueprintCallable)
+	void IncreaseNumOfFinished() { _NumOfFinished++; }
+
+	UFUNCTION(BlueprintCallable)
+	inline uint8 GetNumOfFinished() { return _NumOfFinished; }
 
 
-	FTimerHandle _MapChangeHandler;
+private:
+	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)override;
+
+	virtual APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)override;
+
+	virtual void Logout(AController* Exiting)override;
+
+	void CountEnemyTimer(const float& DeltaTime);
+
+	void CountStartTimer(const float& DeltaTime);
+
+	void CountFinalTimer(const float& DeltaTime);
+
+	void SpawnBoss();
+
 	
 	uint8 _NumOfFinished;
 
