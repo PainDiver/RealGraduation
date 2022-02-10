@@ -62,8 +62,9 @@ void UMyGameInstance::CreateSession()
 		sessionSettings.bShouldAdvertise = true;
 		sessionSettings.bUseLobbiesIfAvailable = true;
 		sessionSettings.bUsesPresence = true;
+		sessionSettings.bAllowJoinInProgress = true;
+		sessionSettings.bAllowJoinViaPresence = true;
 		
-
 		_sessionInterface->CreateSession(0, SESSION_NAME, sessionSettings);
 	}
 }
@@ -188,5 +189,10 @@ void UMyGameInstance::OnJoinSessionComplete(FName sessionName, EOnJoinSessionCom
 	UE_LOG(LogTemp, Warning, TEXT("Joined Session"));
 
 	playerController->ClientTravel(address, ETravelType::TRAVEL_Absolute);
+
+
+	FOnlineSessionSettings setting = _sessionSearch->SearchResults[_selectedIndex.GetValue()].Session.SessionSettings;
+	_sessionInterface->UpdateSession(sessionName, setting, true);
+
 
 }

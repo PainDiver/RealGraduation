@@ -100,22 +100,20 @@ void AMyCharacter::Tick(float DeltaTime)
 	}
 
 	FCharacterMoveInfo move = _actionComponent->CreateMove(DeltaTime);
-	
-	if (IsLocallyControlled())
-	{
-		_actionComponent->SimulateMove(move);
-		_actionComponent->ObjectScan();
-		_actionComponent->RespawnCheck();
-	}
-
-
 	if (GetLocalRole() == ROLE_AutonomousProxy)
 	{
 		_replicatorComponent->EnqueueAcknowledgedMove(move);
 		_replicatorComponent->SendMoveToServer(move);
 	}
-	
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		_replicatorComponent->RespawnCheck();
+	}
 
+	if (IsLocallyControlled())
+	{
+		_actionComponent->SimulateMove(move);
+	}
 
 }
 
@@ -129,7 +127,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	PlayerInputComponent->BindAction("showCursor", IE_Released, this, &AMyCharacter::ShowCursor);
 
-	PlayerInputComponent->BindAction("Use", IE_Pressed, this, &AMyCharacter::Use);
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AMyCharacter::Interact);
 
 	PlayerInputComponent->BindAction("Greet", IE_Pressed, this, &AMyCharacter::Greet);
 
@@ -248,11 +246,11 @@ void AMyCharacter::JumpCharacter()
 	}
 }
 
-void AMyCharacter::Use()
+void AMyCharacter::Interact()
 {
 	if (_actionComponent)
 	{
-		_actionComponent->SetUseInput(true);
+		_actionComponent->SetInteractInput(true);
 	}
 }
 
@@ -269,14 +267,6 @@ void AMyCharacter::Greet()
 	if (_actionComponent)
 	{
 		_actionComponent->SetGreetInput(true);
-	}
-}
-
-void AMyCharacter::Ride()
-{
-	if (_actionComponent)
-	{
-		_actionComponent->SetRideInput(true);
 	}
 }
 

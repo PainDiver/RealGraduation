@@ -37,6 +37,9 @@ public:
 
 
 	UFUNCTION(Server, Reliable)
+		void UseItem(AActor* Caller);
+
+	UFUNCTION(NetMulticast, Reliable)
 		void Activate();
 
 

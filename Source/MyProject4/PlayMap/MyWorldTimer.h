@@ -20,7 +20,7 @@ GetWorld()->GetTimerManager().SetTimer(WaitHandle, FTimerDelegate::CreateLambda(
 		delay 간편함수 
 */
 
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class MYPROJECT4_API AMyWorldTimer : public APlayerController
 {
 	GENERATED_BODY()
@@ -43,6 +43,7 @@ public:
 	UFUNCTION(Server, BlueprintCallable,Reliable)
 	void NotifyArrival();
 	
+
 	UFUNCTION(Server, Unreliable)
 	void Spectate();
 
@@ -79,6 +80,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 		UUserWidget* _StartTimerHUDOverlay;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		UUserWidget* _UIHUDOverlay;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 		class AMyCharacter* _character;
 
@@ -102,6 +107,32 @@ private:
 	UFUNCTION(Client, Unreliable)
 		void TurnOnFinalTimerUI();
 
+	UFUNCTION(NetMulticast, Reliable)
+		void AllMightyMode();
+
+
+
+	UFUNCTION(Server, Reliable)
+		void FlyUp_AllMighty_Server(float value);
+
+	UFUNCTION(NetMulticast, Reliable)
+		void FlyUp_AllMighty_Multi(float value);
+
+
+	UFUNCTION(Server, Reliable)
+	void MoveForward_AllMighty_Server(float value);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MoveForward_AllMighty_Multi(float value);
+
+
+	UFUNCTION(Server, Reliable)
+	void MoveRight_AllMighty_Server(float value);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MoveRight_AllMighty_Multi(float value);
+
+
 	void InitializeInstance();
 
 	void InitializeHUD();
@@ -110,19 +141,13 @@ private:
 
 	void SaveWinnerInfo();
 
-
-	void AllMightyMode();
-
+	
 	void SpectateMode();
 
 	void NotifyFinalCountToAllClients();
 
 
-	void MoveForward_AllMighty(float value);
-
-	void MoveRight_AllMighty(float value);
-
-
+	
 
 	TArray<APlayerState*> _playerArray;
 

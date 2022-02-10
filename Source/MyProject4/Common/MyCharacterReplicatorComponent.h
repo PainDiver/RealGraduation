@@ -41,12 +41,21 @@ public:
 	UFUNCTION(Server, Reliable)
 	void SendMoveToServer(const FCharacterMoveInfo& move);
 
-	void EnqueueAcknowledgedMove(const FCharacterMoveInfo& move) { _unacknowledgedMoves.Add(move);
-	UE_LOG(LogTemp, Warning, TEXT("%d"),_unacknowledgedMoves.Num());
-	}
+	UFUNCTION(Server, Reliable)
+		void RespawnCheck();
 
 	UFUNCTION()
-	void OnRep_ServerChange();
+		void OnRep_ServerChange();
+
+
+	void EnqueueAcknowledgedMove(const FCharacterMoveInfo& move) { _unacknowledgedMoves.Add(move); }
+
+	
+	//debug
+	int GetMoves() { return _unacknowledgedMoves.Num();}
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Debug")
+		FVector _respawn;
 
 private:	
 
@@ -57,11 +66,12 @@ private:
 	FMoveState _serverState;
 
 
-	TArray<FCharacterMoveInfo> _unacknowledgedMoves;
-
+	
 	class UMyCharacterActionComponent* _actionComponent;
 
 	TWeakObjectPtr<AMyCharacter> _owner;
 
 	UCharacterMovementComponent* _characterMovement;
+
+	TArray<FCharacterMoveInfo> _unacknowledgedMoves;
 };

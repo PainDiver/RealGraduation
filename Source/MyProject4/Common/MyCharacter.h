@@ -54,14 +54,21 @@ public:
 	void SetActionComponent(class UMyCharacterActionComponent* ac) {_actionComponent = ac;}
 	
 	UFUNCTION(BlueprintCallable)
-	inline UMyCharacterActionComponent* GetActionComponent()const {return _actionComponent;}
+	inline UMyCharacterActionComponent* GetActionComponent() {return _actionComponent;}
 	
 	UFUNCTION(BlueprintCallable)
 	void SetCharacterMovementComponent(UCharacterMovementComponent* mc) {_characterMovementComponent = mc;}
 	
 	UFUNCTION(BlueprintCallable)
-	inline UCharacterMovementComponent* GetCharacterMovementComponent()const {return _characterMovementComponent;}
-	
+	inline UCharacterMovementComponent* GetCharacterMovementComponent() {return _characterMovementComponent;}
+
+	UFUNCTION(BlueprintCallable)
+		void SetCharacterReplicatorComponent(UMyCharacterReplicatorComponent* rc) { _replicatorComponent = rc; }
+
+	UFUNCTION(BlueprintCallable)
+		inline UMyCharacterReplicatorComponent* GetCharacterReplicatorComponent() { return _replicatorComponent; }
+
+
 	UFUNCTION(BlueprintCallable)
 	void SetPlayerState(class AMyPlayerState* ps) {_playerState = ps;}
 	
@@ -96,16 +103,15 @@ private:
 
 	void JumpCharacter();
 
-	void Use();
+	void Interact();
 
 	void Attack();
 
 	void Greet();
 
-	void Ride();
-
 	void ShowCursor();
 
+	
 
 	//Initial Value
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Attack")

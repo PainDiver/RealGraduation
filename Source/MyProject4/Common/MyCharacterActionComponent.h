@@ -8,6 +8,8 @@
 #include "MyCharacterActionComponent.generated.h"
 
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDelegateInteract,AActor*,DelegateCaller);
+
 USTRUCT()
 struct FCharacterMoveInfo
 {
@@ -28,7 +30,7 @@ struct FCharacterMoveInfo
 	UPROPERTY()
 		bool _jumpInput;
 	UPROPERTY()
-		bool _useInput;
+		bool _interactInput;
 	UPROPERTY()
 		bool _attackInput;
 	UPROPERTY()
@@ -38,8 +40,7 @@ struct FCharacterMoveInfo
 
 };
 
-
-UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
+UCLASS(BlueprintType, Blueprintable)
 class MYPROJECT4_API UMyCharacterActionComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -58,11 +59,6 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UFUNCTION(Server, Reliable)
-		void ObjectScan();
-
-	UFUNCTION(NetMulticast, Reliable)
-		void Ride(AActor* target, bool Input);
 
 	UPROPERTY(replicated, BlueprintReadWrite, Category = "Animation")
 		bool _bIsAttacking;
@@ -70,24 +66,21 @@ public:
 	UPROPERTY(replicated, BlueprintReadWrite, Category = "Animation")
 		bool _bIsGreeting;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Debug")
-		FVector _respawn;
+	UPROPERTY(BlueprintAssignable, Category = "Event")
+		FDelegateInteract _interactDele;
 
 	void SimulateMove(const FCharacterMoveInfo& MoveInfo);
 
 	void ReplayMove(const FCharacterMoveInfo& MoveInfo);
 
-
 	FCharacterMoveInfo CreateMove(const float& DeltaTime);
+
+	
 
 private:
 
-
 	
-	
-	void RespawnCheck();
-
-	void UseItem(bool Input);
+	void Interact(bool Input);
 
 	void Attack(bool Input);
 
@@ -109,10 +102,9 @@ private:
 	void SetRotatingInput(float value) { _rotatingInput = value; }
 	void SetLookUpInput(float value) { _lookUpInput = value; }
 	void SetJumpInput(bool value) { _jumpInput = value; }
-	void SetUseInput(bool value) { _useInput = value; }
+	void SetInteractInput(bool value) { _interactInput = value; }
 	void SetAttackInput(bool value) { _attackInput = value; }
 	void SetGreetInput(bool value) { _greetInput = value; }
-	void SetRideInput(bool value) { _rideInput = value; }
 
 	//Inputs
 	float _forwardInput;
@@ -125,13 +117,12 @@ private:
 
 	bool _jumpInput;
 
-	bool _useInput;
+	bool _interactInput;
 
 	bool _attackInput;
 
 	bool _greetInput;
 
-	bool _rideInput;
 
 	TWeakObjectPtr<AMyCharacter> _owner;
 };

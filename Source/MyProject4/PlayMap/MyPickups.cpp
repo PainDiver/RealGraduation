@@ -9,6 +9,7 @@
 #include "../Common/MyGameInstance.h"
 #include "MyPlayerState.h"
 #include "Net/UnrealNetWork.h"
+#include "../Common/MyCharacterActionComponent.h"
 
 // Sets default values
 AMyPickups::AMyPickups()
@@ -28,8 +29,6 @@ void AMyPickups::BeginPlay()
 	}
 }
 
-
-
 void AMyPickups::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Super::OnOverlapBegin(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
@@ -40,13 +39,13 @@ void AMyPickups::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor
 		SetActorEnableCollision(false);
 		_mesh->SetVisibility(false);
 		SetOwner(_character);
-		
 		if (HasAuthority())
 		{
+			_character->GetActionComponent()->_interactDele.AddDynamic(this,&AMyPickups::UseItem);
 			RPCAdd(_character);
 		}
 	}
-
+	
 }
 
 void AMyPickups::RPCAdd_Implementation(AMyCharacter* character)
@@ -56,6 +55,24 @@ void AMyPickups::RPCAdd_Implementation(AMyCharacter* character)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Item got"));
 		_playerState->_Inventory.Add(this);
+	}
+
+}
+
+
+void AMyPickups::UseItem_Implementation(AActor* Caller)
+{
+	AMyCharacter* owner = Cast<AMyCharacter>(Caller);
+	AMyPlayerState* playerState = Cast<AMyPlayerState>(owner->GetPlayerState());
+
+	if (!owner || !playerState) return;
+	if (playerState->_Inventory.Num() == 0) return;
+
+	AMyPickups* item = playerState->_Inventory.Pop();
+
+	if (item)
+	{
+		item->Activate();
 	}
 
 }

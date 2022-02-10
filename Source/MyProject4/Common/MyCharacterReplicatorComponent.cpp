@@ -11,7 +11,8 @@ UMyCharacterReplicatorComponent::UMyCharacterReplicatorComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-	SetIsReplicated(true);
+
+	_respawn = FVector(2770.421387f, 19.757507f, 120.f);
 	// ...
 }
 
@@ -37,18 +38,28 @@ void UMyCharacterReplicatorComponent::TickComponent(float DeltaTime, ELevelTick 
 	// ...
 }
 
+void UMyCharacterReplicatorComponent::RespawnCheck_Implementation()
+{
+	if (_owner->GetActorLocation().Z < -2000)
+	{
+		_owner->SetActorLocation(_respawn);
+	}
+}
+
 
 void UMyCharacterReplicatorComponent::SendMoveToServer_Implementation(const FCharacterMoveInfo& move)
 {
 	if (!_owner.IsValid() || !_actionComponent) return;
 	_actionComponent->SimulateMove(move);
 
+	_serverState._transform = _owner->GetActorTransform();
 	_serverState._lastMove = move;
 }
 
 void UMyCharacterReplicatorComponent::OnRep_ServerChange()
 {
 	if (!_owner.IsValid()) return;
+
 
 	ClearUnacknowledgedMoves(_serverState._lastMove);
 	for (const auto& move : _unacknowledgedMoves)

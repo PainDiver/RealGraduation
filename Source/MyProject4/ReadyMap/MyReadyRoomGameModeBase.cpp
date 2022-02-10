@@ -16,11 +16,13 @@ AMyReadyRoomGameModeBase::AMyReadyRoomGameModeBase()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	//_userNum=0;
 	//_maxNum = 8;
+	
 
 	PlayerControllerClass = AReadyRoomPlayerController::StaticClass();
 	PlayerStateClass = AMyPlayerState::StaticClass();
 	GameStateClass = AReadyRoomGameStateBase::StaticClass();
 	DefaultPawnClass = AMyCharacter::StaticClass();
+	
 }
 
 // Called when the game starts or when spawned

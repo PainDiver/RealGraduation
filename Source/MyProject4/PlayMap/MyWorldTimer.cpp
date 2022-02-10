@@ -67,20 +67,18 @@ void AMyWorldTimer::NotifyArrival_Implementation()
 		_playerState = Cast<AMyPlayerState>(PlayerState);
 	}
 
-
 	_gameMode->SetIsFinal(true);
-
+	NotifyFinalCountToAllClients();
 	SaveWinnerInfo();
 	TurnOnSpectateUI();
-	NotifyFinalCountToAllClients();
 
 	if (_gameMode->GetNumOfFinished() == 0)
 	{
 		_playerState->_IsFirst = true;
 		if (_playerState->_IsFirst)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Hello Winner"));
 			_playerState->_allMightyMode = true;
-			ChangeBindAction_AllMighty();
 			AllMightyMode();
 		}
 	}
@@ -91,7 +89,12 @@ void AMyWorldTimer::NotifyArrival_Implementation()
 	}
 
 	_gameMode->IncreaseNumOfFinished();
+
+
 }
+
+
+
 
 
 void AMyWorldTimer::Spectate_Implementation()
@@ -209,7 +212,15 @@ void AMyWorldTimer::InitializeHUD()
 				_StartTimerHUDOverlay->AddToViewport();
 			}
 		}
-
+		if (_gameInstance->_UIHUDAsset)
+		{
+			_UIHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_UIHUDAsset);
+			if (_UIHUDOverlay)
+			{
+				_UIHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
+				_UIHUDOverlay->AddToViewport();
+			}
+		}
 		SetCharacterName(_gameInstance->_characterInfo._CharacterName);
 	}
 	GetWorldTimerManager().SetTimer(UpdateHandle, this, &AMyWorldTimer::UpdateHUD, 0.2, true, 0.2);
@@ -241,17 +252,15 @@ void AMyWorldTimer::SaveWinnerInfo()
 		FCharacterInfo characterInfo = FCharacterInfo{ _playerState->_CharacterColor,_playerState->_CharacterName,_gameMode->GetNumOfFinished() };
 		_gameInstance->_winner.Push(characterInfo);
 	}
+	
 }
 
 
-void AMyWorldTimer::AllMightyMode()
+void AMyWorldTimer::AllMightyMode_Implementation()
 {
-	GetCharacter()->GetCharacterMovement()->MaxFlySpeed = 5000.f;
-	GetCharacter()->GetCharacterMovement()->BrakingDecelerationFlying = 100000.f;
-	GetCharacter()->SetActorEnableCollision(false);
-	GetCharacter()->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
-
-	
+	GetCharacter()->GetCapsuleComponent()->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
+	GetCharacter()->GetCharacterMovement()->GravityScale = 0.0f;
+	ChangeBindAction_AllMighty();
 }
 
 void AMyWorldTimer::SpectateMode()
@@ -373,17 +382,66 @@ void AMyWorldTimer::TurnOnFinalTimerUI_Implementation()
 		_FinalTimerHUDOverlay = CreateWidget<UUserWidget>(this, Cast<UMyGameInstance>(GetGameInstance())->_finalTimerHUDAsset);
 		_FinalTimerHUDOverlay->SetVisibility(ESlateVisibility::Visible);
 		_FinalTimerHUDOverlay->AddToViewport();
+		
 	}
 }
 
+void AMyWorldTimer::FlyUp_AllMighty_Server_Implementation(float value)
+{
+	FlyUp_AllMighty_Multi(value);
+}
+
+
+void AMyWorldTimer::FlyUp_AllMighty_Multi_Implementation(float value)
+{
+	FVector currentLoc = GetCharacter()->GetActorLocation();
+	FVector newLoc = currentLoc + 25 * GetCharacter()->GetActorUpVector()*value;
+	GetCharacter()->SetActorLocation(newLoc);
+}
+
+void AMyWorldTimer::MoveForward_AllMighty_Server_Implementation(float value)
+{
+	MoveForward_AllMighty_Multi(value);
+}
+
+void AMyWorldTimer::MoveForward_AllMighty_Multi_Implementation(float value)
+{
+	FVector currentLoc = GetCharacter()->GetActorLocation();
+	FRotator currentRot = GetControlRotation();
+	FRotationMatrix rotmat = FRotationMatrix(currentRot);
+	FVector dir = rotmat.GetUnitAxis(EAxis::X);
+	FVector newLoc = currentLoc + 25 *value * dir;
+	GetCharacter()->SetActorLocation(newLoc);
+}
+
+
+void AMyWorldTimer::MoveRight_AllMighty_Server_Implementation(float value)
+{	
+	MoveRight_AllMighty_Multi(value);
+}
+
+void AMyWorldTimer::MoveRight_AllMighty_Multi_Implementation(float value)
+{
+	FVector currentLoc = GetCharacter()->GetActorLocation();
+	FVector newLoc = currentLoc + 25 * GetCharacter()->GetActorRightVector()*value;
+	GetCharacter()->SetActorLocation(newLoc);
+}
 
 
 
 void AMyWorldTimer::ChangeBindAction_AllMighty_Implementation()
 {
-	InputComponent->BindAxis(TEXT("MoveForward"), this, &AMyWorldTimer::MoveForward_AllMighty);
-	InputComponent->BindAxis(TEXT("MoveRight"), this, &AMyWorldTimer::MoveRight_AllMighty);
+	InputComponent->RemoveActionBinding(TEXT("Jump"), EInputEvent::IE_Pressed);
+	InputComponent->RemoveActionBinding(TEXT("Jump"), EInputEvent::IE_Released);
+
+	GetCharacter()->InputComponent->BindAxis("FlyUp", this, &AMyWorldTimer::FlyUp_AllMighty_Server);
+
+	GetCharacter()->InputComponent->BindAxis("MoveForward", this, &AMyWorldTimer::MoveForward_AllMighty_Server);
+	GetCharacter()->InputComponent->BindAxis("MoveRight", this, &AMyWorldTimer::MoveRight_AllMighty_Server);
+
 }
+
+
 
 void AMyWorldTimer::ChangeBindAction_Spectate_Implementation()
 {
@@ -391,26 +449,3 @@ void AMyWorldTimer::ChangeBindAction_Spectate_Implementation()
 	InputComponent->BindAction(TEXT("ViewChange"), IE_Pressed, this, &AMyWorldTimer::ChangeView);
 }
 
-
-
-
-
-
-
-
-void AMyWorldTimer::MoveForward_AllMighty(float value)
-{
-	FRotator rotation = GetControlRotation();
-	FRotator yawRotation(rotation.Pitch, rotation.Yaw, 0);
-	FVector direction = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::X);
-	GetCharacter()->AddMovementInput(direction, value);
-}
-
-
-void AMyWorldTimer::MoveRight_AllMighty(float value)
-{
-	FRotator rotation = GetControlRotation();
-	FRotator yawRotation(0, rotation.Yaw, 0);
-	FVector direction = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::Y);
-	GetCharacter()->AddMovementInput(direction, value);
-}

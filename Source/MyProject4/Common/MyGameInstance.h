@@ -103,6 +103,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 		TSubclassOf<class UUserWidget> _startTimerHUDAsset;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _UIHUDAsset;
+
+
 
 	//In Game Values
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
