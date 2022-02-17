@@ -80,12 +80,19 @@ void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (HasAuthority())
+	InitializeInstance();
+	
+	if (IsLocallyControlled())
+	{
+		UMyGameInstance* localInstance = Cast<UMyGameInstance>(GetGameInstance());
+		SetCharacterInfo_Server(localInstance->_characterInfo);
+	}
+
+	if (IsLocallyControlled())
 	{
 		SpawnDefaultWeapon();
 	}
-	InitializeColor();
-	InitializeInstance();
+
 }
 
 // Called every frame
@@ -143,56 +150,38 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 }
 
-
-void AMyCharacter::InitializeColor()
-{
-	FTimerHandle delay;
-	GetWorldTimerManager().SetTimer(delay, FTimerDelegate::CreateLambda([&]()
-		{
-			SetColor();
-		}), 2.f, false);
-
-	FTimerHandle delay2;
-	GetWorldTimerManager().SetTimer(delay2, FTimerDelegate::CreateLambda([&]()
-		{
-			_playerState = GetPlayerState<AMyPlayerState>();
-			SetColor_Multi(_playerState->_CharacterColor);
-		}), 4.f, false);
-}
-
 void AMyCharacter::InitializeInstance()
 {
 	_playerState = Cast<AMyPlayerState>(GetPlayerState());
 }
 
-void AMyCharacter::SaveColor_Implementation(const FLinearColor& color)
+void AMyCharacter::SetCharacterInfo_Server_Implementation(FCharacterInfo info)
 {
-	if (!IsLocallyControlled())
+	AMyPlayerState* playerState = Cast<AMyPlayerState>(GetPlayerState());
+	if (!playerState)
 	{
 		return;
 	}
-	_playerState = GetPlayerState<AMyPlayerState>();
-	_playerState->_CharacterColor = color;
-	_playerState->_Initialized = true;
-	GetMesh()->CreateDynamicMaterialInstance(0)->SetVectorParameterValue(TEXT("Color"), color);
+
+	playerState->_characterInfo = info;
+	playerState->_Initialized = true;
 }
 
-void AMyCharacter::SetColor_Implementation()
+
+void AMyCharacter::SetColor_Implementation(const FLinearColor& color)
 {
-	UMyGameInstance* localGameInstance = GetGameInstance<UMyGameInstance>();
-	SaveColor(localGameInstance->_characterInfo._characterMesh);
-	GetMesh()->CreateDynamicMaterialInstance(0)->SetVectorParameterValue(TEXT("Color"), localGameInstance->_characterInfo._characterMesh);
+	SetColor_Multi(color);
 }
 
 void AMyCharacter::SetColor_Multi_Implementation(const FLinearColor& color)
-{
-	GetMesh()->CreateDynamicMaterialInstance(0)->SetVectorParameterValue(TEXT("Color"), color);
+{	
+	GetMesh()->CreateDynamicMaterialInstance(0)->SetVectorParameterValue(TEXT("Color"), color);	
 }
+
 
 
 void AMyCharacter::SpawnDefaultWeapon_Implementation()
 {
-	
 	if (!_equippedWeapon)
 	{
 		_equippedWeapon = GetWorld()->SpawnActor<AMyWeapon>(_DefaultWeapon, FVector(0, 0, -500), FRotator(), FActorSpawnParameters());
@@ -202,7 +191,6 @@ void AMyCharacter::SpawnDefaultWeapon_Implementation()
 		GetMesh()->GetSocketByName("AttackSocket")->AttachActor(_equippedWeapon, GetMesh());
 	}
 }
-
 
 
 void AMyCharacter::MoveForward(float value)

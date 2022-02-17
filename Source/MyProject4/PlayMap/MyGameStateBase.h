@@ -43,4 +43,10 @@ public:
 
 	UPROPERTY(replicated, BlueprintReadOnly)
 		float _StartTimer;
+
+	UPROPERTY(replicated, BlueprintReadOnly)
+		int _numOfConnectedPlayerInCurrentSession;
+
+	UPROPERTY(replicated, BlueprintReadOnly)
+		bool _gameStarted;
 };

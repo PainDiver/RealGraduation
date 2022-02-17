@@ -4,7 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "MyGameInstance.h"
 #include "MyCharacter.generated.h"
+
+
+
 
 
 UCLASS()
@@ -35,14 +39,18 @@ public:
 	
 	//Initial Function
 	
-	UFUNCTION(Server, Reliable)
+
+	UFUNCTION(Server,Reliable)
 	void SpawnDefaultWeapon();
 
-	UFUNCTION(Server, Reliable)
-		void SaveColor(const FLinearColor& color);
 
-	UFUNCTION(Client, Reliable)
-		void SetColor();
+
+	UFUNCTION(Server, Reliable)
+		void SetCharacterInfo_Server(FCharacterInfo info);
+
+
+	UFUNCTION(Server, Reliable)
+		void SetColor(const FLinearColor& color);
 
 	UFUNCTION(NetMulticast, Reliable)
 		void SetColor_Multi(const FLinearColor& color);
@@ -75,7 +83,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	inline AMyPlayerState* GetMyPlayerState()const {return _playerState;}
 
-
+	
 
 
 // public UPROPERTY
@@ -86,9 +94,21 @@ public:
 	class USpringArmComponent* _springArm;
 
 
+	UPROPERTY()
+	AMyPlayerState* _playerState;
+
+
+	UPROPERTY()
+		UMyCharacterActionComponent* _actionComponent;
+	UPROPERTY()
+		class UMyCharacterReplicatorComponent* _replicatorComponent;
+	UPROPERTY()
+		UCharacterMovementComponent* _characterMovementComponent;
+
+
 private:
 
-	void InitializeColor();
+	
 
 	void InitializeInstance();
 
@@ -120,7 +140,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Attack")
 	AMyWeapon* _equippedWeapon;
 
-
 	//In Game Value
 	float _effect;
 
@@ -128,17 +147,6 @@ private:
 
 	AActor* _target;
 
-	AMyPlayerState* _playerState;
-
-
-
-
-
 	//Components
-	UMyCharacterActionComponent* _actionComponent;
 
-	class UMyCharacterReplicatorComponent* _replicatorComponent;
-
-	UCharacterMovementComponent* _characterMovementComponent;
-	
 };

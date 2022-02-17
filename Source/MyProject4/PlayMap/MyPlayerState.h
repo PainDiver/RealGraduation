@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "../Common/MyGameInstance.h"
 #include "MyPlayerState.generated.h"
 
 /**
@@ -33,11 +34,10 @@ public:
 	UPROPERTY(replicated, BlueprintReadOnly, Category = "Spectate")
 		TArray<class AMyPickups*> _Inventory;
 
-	UPROPERTY(replicated)
-		FString _CharacterName;
 
-	UPROPERTY(replicated)
-		FLinearColor _CharacterColor;
+	UPROPERTY(replicatedUsing = OnRep_InitializeColor)
+	FCharacterInfo _characterInfo;
+
 
 	UPROPERTY(replicated)
 		bool _Initialized;
@@ -45,5 +45,11 @@ public:
 	UPROPERTY(replicated)
 		bool _allMightyMode;
 
+
+	UFUNCTION(Server, Reliable)
+		void NotifyConnection();
+
+	UFUNCTION(Server, Reliable)
+		void OnRep_InitializeColor();
 
 };

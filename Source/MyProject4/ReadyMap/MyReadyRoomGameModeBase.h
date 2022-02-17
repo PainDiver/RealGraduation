@@ -30,6 +30,7 @@ public:
 
 	virtual void Logout(AController* Exiting);
 
+	
 
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room Capacity")

@@ -10,6 +10,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDelegateInteract,AActor*,DelegateCaller);
 
+
 USTRUCT()
 struct FCharacterMoveInfo
 {
@@ -68,6 +69,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Event")
 		FDelegateInteract _interactDele;
+	
+	UFUNCTION(Server, Reliable)
+		void UseItem();
 
 	void SimulateMove(const FCharacterMoveInfo& MoveInfo);
 
@@ -76,6 +80,7 @@ public:
 	FCharacterMoveInfo CreateMove(const float& DeltaTime);
 
 	
+
 
 private:
 
@@ -95,6 +100,7 @@ private:
 	void AddRotation(const float& DeltaTime, const float& Input);
 
 	void Jump(const bool& Input);
+
 
 
 	void SetForwardInput(float value) { _forwardInput=value; }

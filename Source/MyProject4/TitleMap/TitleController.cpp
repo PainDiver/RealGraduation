@@ -4,7 +4,7 @@
 #include "TitleController.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
-
+#include "Blueprint/WidgetBlueprintLibrary.h"
 
 
 ATitleController::ATitleController()
@@ -18,18 +18,18 @@ void ATitleController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (IsLocalPlayerController())
-	{
-		if (_MenuHUDAsset)
-		{
-			_MenuHUDOverlay = CreateWidget<UUserWidget>(this, _MenuHUDAsset);
-			_MenuHUDOverlay->SetVisibility(ESlateVisibility::Visible);
-			bShowMouseCursor = true;
-			_MenuHUDOverlay->AddToViewport();
-		}
-
-
-	}
-
 }
 
+
+void ATitleController::PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel)
+{
+	TArray<UUserWidget*> widgets;
+	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), widgets, UUserWidget::StaticClass());
+
+	for (auto widget : widgets)
+	{
+		widget->RemoveFromParent();
+	}
+
+	Super::PreClientTravel(PendingURL, TravelType, bIsSeamlessTravel);
+}

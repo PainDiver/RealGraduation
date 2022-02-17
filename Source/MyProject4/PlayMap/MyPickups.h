@@ -35,13 +35,8 @@ public:
 	UFUNCTION(Server, Reliable)
 		void RPCAdd(AMyCharacter* OtherActor);
 
-
-	UFUNCTION(Server, Reliable)
-		void UseItem(AActor* Caller);
-
 	UFUNCTION(NetMulticast, Reliable)
 		void Activate();
-
 
 	UFUNCTION(Server, Reliable)
 		void RestoreSelf();

@@ -50,19 +50,6 @@ void AReadyRoomGameStateBase::FindAllPlayerControllerHideAllWidget_Implementatio
 	{
 		AReadyRoomPlayerController* pc = Cast<AReadyRoomPlayerController>(playerController);
 
-		if (pc->_ReadyHUDOverlay)
-		{
-			pc->_ReadyHUDOverlay->RemoveFromParent();
-		}
-		if (pc->_ChattingHUDOverlay)
-		{
-			pc->_ChattingHUDOverlay->RemoveFromParent();
-		}
-
-		if (pc->_StartHUDOverlay)
-		{
-			pc->_StartHUDOverlay->RemoveFromParent();
-		}
 		pc->GetWorldTimerManager().ClearTimer(pc->_timerHandle);
 		pc->GetWorldTimerManager().ClearTimer(pc->_timerHandle2);
 	}
@@ -73,20 +60,6 @@ void AReadyRoomGameStateBase::HideAllWidget_Implementation()
 {
 	APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	AReadyRoomPlayerController* pc = Cast<AReadyRoomPlayerController>(playerController);
-
-	if (pc->_ReadyHUDOverlay)
-	{
-		pc->_ReadyHUDOverlay->RemoveFromParent();
-	}
-	if (pc->_ChattingHUDOverlay)
-	{
-		pc->_ChattingHUDOverlay->RemoveFromParent();
-	}
-
-	if (pc->_StartHUDOverlay)
-	{
-		pc->_StartHUDOverlay->RemoveFromParent();
-	}
 
 	pc->GetWorldTimerManager().ClearTimer(pc->_timerHandle);
 	pc->GetWorldTimerManager().ClearTimer(pc->_timerHandle2);

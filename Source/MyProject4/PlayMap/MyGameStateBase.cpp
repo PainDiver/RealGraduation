@@ -16,6 +16,7 @@ AMyGameStateBase::AMyGameStateBase()
 	PrimaryActorTick.bCanEverTick = true;
 	_finalTimer = 0;
 	_StartTimer = 5;
+	_numOfConnectedPlayerInCurrentSession = 0;
 }
 
 void AMyGameStateBase::BeginPlay()
@@ -108,4 +109,6 @@ void AMyGameStateBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 
 	DOREPLIFETIME(AMyGameStateBase, _finalTimer);
 	DOREPLIFETIME(AMyGameStateBase, _StartTimer);
+	DOREPLIFETIME(AMyGameStateBase, _numOfConnectedPlayerInCurrentSession);
+	DOREPLIFETIME(AMyGameStateBase, _gameStarted);
 }

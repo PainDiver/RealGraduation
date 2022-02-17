@@ -12,6 +12,8 @@
 #include "Components/ScrollBox.h"
 #include "../Common/MyGameInstance.h"
 #include "GameFramework/Character.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+
 
 AReadyRoomPlayerController::AReadyRoomPlayerController()
 {
@@ -24,11 +26,7 @@ void AReadyRoomPlayerController::BeginPlay()
 	Initialize();
 }
 
-void AReadyRoomPlayerController::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 
-}
 
 void AReadyRoomPlayerController::SetupInputComponent()
 {
@@ -36,6 +34,22 @@ void AReadyRoomPlayerController::SetupInputComponent()
 	InputComponent->BindAction(TEXT("Chat"), IE_Pressed, this, &AReadyRoomPlayerController::ShowChattingPannel);
 
 }
+
+void AReadyRoomPlayerController::PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel)
+{
+	if (IsLocalPlayerController())
+	{
+		TArray<UUserWidget*> widgets;
+		UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), widgets, UUserWidget::StaticClass());
+
+		for (auto widget : widgets)
+		{
+			widget->RemoveFromParent();
+		}
+	}
+	Super::PreClientTravel(PendingURL,TravelType,bIsSeamlessTravel);
+}
+
 
 void AReadyRoomPlayerController::commit_Implementation(const FString& message)
 {

@@ -58,6 +58,7 @@ FCharacterMoveInfo UMyCharacterActionComponent::CreateMove(const float& DeltaTim
 	_interactInput = false;
 	_attackInput = false;
 	_greetInput = false;
+	_interactInput = false;
 
 	return move;
 }
@@ -92,6 +93,24 @@ void UMyCharacterActionComponent::ReplayMove(const FCharacterMoveInfo& MoveInfo)
 }
 
 
+void UMyCharacterActionComponent::UseItem_Implementation()
+{
+	AMyCharacter* owner = Cast<AMyCharacter>(GetOwner());
+	AMyPlayerState* playerState = Cast<AMyPlayerState>(owner->GetPlayerState());
+
+	if (!owner || !playerState) return;
+	if (playerState->_Inventory.Num() == 0) return;
+
+	AMyPickups* item = playerState->_Inventory.Pop();
+
+	if (item)
+	{
+		item->Activate();
+	}
+
+}
+
+
 void UMyCharacterActionComponent::Interact(bool Input)
 {
 	if (Input && _interactDele.IsBound())
@@ -99,7 +118,16 @@ void UMyCharacterActionComponent::Interact(bool Input)
 		_interactDele.Broadcast(GetOwner());
 		_interactDele.Clear();
 	}
+	else if(Input)
+	{
+		UseItem();
+	}
+
+
 }
+
+
+
 
 
 void UMyCharacterActionComponent::Attack(bool Input)

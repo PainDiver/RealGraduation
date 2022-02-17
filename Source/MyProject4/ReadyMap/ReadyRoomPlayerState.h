@@ -18,10 +18,5 @@ public:
 
 protected:
 	virtual void BeginPlay()override;
-public:
-	virtual void CopyProperties(APlayerState* playerstate);
-
-	virtual void DispatchCopyProperties(APlayerState* playerstate);
-
 
 };

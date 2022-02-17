@@ -28,6 +28,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int _number =100;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool initialized = false;
 };
 
 
@@ -123,7 +126,33 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
 	TArray<FSessionInfo> _sessionInfo;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
+		bool _lanCheck;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
+		int _numOfPlayerInCurrentSession;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
+	FName _currentSessionName;
+
+
+
+	UPROPERTY()
+	int _selectedIndex;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "Session")
+	bool _host = false;
+
+
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+		void UpdateGameSession(FName sessionName, bool advertise = true);
+
+	UFUNCTION(Server,Reliable,BlueprintCallable, Category = "Transition")
+		void MyServerTravel(const FString& mapName, const FString& additionalOption, bool bAbsolute);
+
+
+	
+	
 private:
 	//callback for server hosting, joining, destroying
 	void OnCreateSessionComplete(FName sessionName, bool success);
@@ -136,13 +165,11 @@ private:
 
 	void OnNetworkFailure(UWorld* world, UNetDriver* netDriver, ENetworkFailure::Type failureType, const FString& error);
 
-	
-	TSharedPtr<class FOnlineSessionSearch> _sessionSearch;
-
 	IOnlineSessionPtr _sessionInterface;
 
-	TOptional<int> _selectedIndex;
+	FString _currentSessionAddress;
 
-	bool _lanCheck;
+	TSharedPtr<class FOnlineSessionSearch> _sessionSearch;
 
+	
 };

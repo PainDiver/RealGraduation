@@ -15,7 +15,6 @@
 
 AMyProject4GameModeBase::AMyProject4GameModeBase()
 {
-	PrimaryActorTick.bCanEverTick = true;
 
 	PlayerControllerClass = AMyWorldTimer::StaticClass();
 	GameStateClass = AMyGameStateBase::StaticClass();
@@ -35,50 +34,64 @@ AMyProject4GameModeBase::AMyProject4GameModeBase()
 	_bIsStarted = false;
 
 	_StartTimer = 5;
-
+	_abandonUnconnectedPlayersWithIn = 10;
 }
 
 // Called when the game starts or when spawned
 void AMyProject4GameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
-	_gameState = GetGameState<AMyGameStateBase>();
 
+	_gameState = GetGameState<AMyGameStateBase>();
+	if (!_gameState)
+	{
+		return;
+	}
+
+	GetWorldTimerManager().SetTimer(_timerForCheckConnection, FTimerDelegate::CreateLambda([&]()
+		{
+			_abandonUnconnectedPlayersWithIn -= 0.1;
+			UMyGameInstance* instance = GetGameInstance<UMyGameInstance>();
+			if (!instance)
+			{
+				return;
+			}
+			AMyGameStateBase* gameState = GetGameState<AMyGameStateBase>();
+			if (!gameState)
+			{
+				return;
+			}
+			if (instance->_numOfPlayerInCurrentSession == gameState->_numOfConnectedPlayerInCurrentSession || _abandonUnconnectedPlayersWithIn <= 0)
+			{
+				PrimaryActorTick.bCanEverTick = true;
+				_gameState->_gameStarted = true;
+				GetWorldTimerManager().ClearTimer(_timerForCheckConnection);
+			}
+		}), 0.1, true);
 }
 
 void AMyProject4GameModeBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	CountEnemyTimer(DeltaTime);
-	CountFinalTimer(DeltaTime);
-	CountStartTimer(DeltaTime);
+	if (_gameState->_gameStarted)
+	{
+		CountEnemyTimer(DeltaTime);
+		CountFinalTimer(DeltaTime);
+		CountStartTimer(DeltaTime);
+	}
 }
 
 
 void AMyProject4GameModeBase::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
-	if ((Cast<UMyGameInstance>(GetGameInstance())->_gameStarted))
-	{
-		return;
-	}
-	else
-	{
-		Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
-	}
+	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);	
 }
 
 
 APlayerController* AMyProject4GameModeBase::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
-	if ((Cast<UMyGameInstance>(GetGameInstance())->_gameStarted))
-	{
-		return NULL;
-	}
-	else
-	{
-		return Super::Login(NewPlayer, InRemoteRole, Options, Portal, UniqueId, ErrorMessage);
-	}
+	return Super::Login(NewPlayer, InRemoteRole, Options, Portal, UniqueId, ErrorMessage);
 }
 
 void AMyProject4GameModeBase::Logout(AController* Exiting)
@@ -111,12 +124,12 @@ void AMyProject4GameModeBase::CountStartTimer(const float& DeltaTime)
 			_gameState->_StartTimer = _StartTimer;
 			if (_StartTimer < 0)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("%f"), _StartTimer);
 				_gameState->LetPlayerMove();
 				_bIsStarted = true;
 			}
 		}
 	}
+
 }
 
 void AMyProject4GameModeBase::CountFinalTimer(const float& DeltaTime)

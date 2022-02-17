@@ -40,7 +40,7 @@ void UMyCharacterReplicatorComponent::TickComponent(float DeltaTime, ELevelTick 
 
 void UMyCharacterReplicatorComponent::RespawnCheck_Implementation()
 {
-	if (_owner->GetActorLocation().Z < -2000)
+	if (_owner->GetActorLocation().Z < -2000 || _owner->GetActorLocation().Z > 5000)
 	{
 		_owner->SetActorLocation(_respawn);
 	}

@@ -35,6 +35,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AIRespawn")
 		FVector _AIRespawnPoint;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timer")
+	float _StartTimer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TImer")
+	float _abandonUnconnectedPlayersWithIn;
+	
+	
 	UFUNCTION(BlueprintCallable)
 	void SetIsFinal(const bool& Final) { _bIsFinal = Final; }
 
@@ -46,6 +53,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	inline uint8 GetNumOfFinished() { return _NumOfFinished; }
+
+
 
 
 private:
@@ -80,6 +89,7 @@ private:
 
 	bool _bIsStarted;
 
-	float _StartTimer;
+	FTimerHandle _timerForCheckConnection;
 
+	FTimerHandle _timerForControl;
 };

@@ -24,6 +24,9 @@ protected:
 public:
 	virtual void SetupInputComponent() override;
 
+	virtual void PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel) override;
+
+
 	void Initialize();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interface")

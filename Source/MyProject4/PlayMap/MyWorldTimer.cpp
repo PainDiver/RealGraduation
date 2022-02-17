@@ -19,6 +19,8 @@
 #include "Styling/SlateBrush.h"
 #include "MyPickUps.h"
 #include "Animation/SkeletalMeshActor.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+
 
 // Sets default values
 AMyWorldTimer::AMyWorldTimer()
@@ -47,6 +49,21 @@ void AMyWorldTimer::BeginPlay()
 void AMyWorldTimer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void AMyWorldTimer::PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel)
+{
+	if (IsLocalPlayerController())
+	{
+		TArray<UUserWidget*> widgets;
+		UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), widgets, UUserWidget::StaticClass());
+
+		for (auto widget : widgets)
+		{
+			widget->RemoveFromParent();
+		}
+	}
+	Super::PreClientTravel(PendingURL, TravelType, bIsSeamlessTravel);
 }
 
 
@@ -92,6 +109,8 @@ void AMyWorldTimer::NotifyArrival_Implementation()
 
 
 }
+
+
 
 
 
@@ -152,13 +171,6 @@ void AMyWorldTimer::UpdateHUD_Implementation()
 
 }
 
-void AMyWorldTimer::SetCharacterName_Implementation(const FString& name)
-{
-	_playerState = GetPlayerState<AMyPlayerState>();
-	_playerState->_CharacterName = name;
-}
-
-
 
 void AMyWorldTimer::InitializeInstance()
 {
@@ -167,8 +179,6 @@ void AMyWorldTimer::InitializeInstance()
 	_playerState = Cast<AMyPlayerState>(PlayerState);
 	_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
 	_character = Cast<AMyCharacter>(GetCharacter());
-
-
 }
 
 
@@ -176,6 +186,9 @@ void AMyWorldTimer::InitializeHUD()
 {
 	if (IsLocalPlayerController())
 	{
+		_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
+
+
 		if (_gameInstance->_inventoryHUDAsset)
 		{
 			_inventoryHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_inventoryHUDAsset);
@@ -221,11 +234,10 @@ void AMyWorldTimer::InitializeHUD()
 				_UIHUDOverlay->AddToViewport();
 			}
 		}
-		SetCharacterName(_gameInstance->_characterInfo._CharacterName);
+		
+		GetWorldTimerManager().SetTimer(UpdateHandle, this, &AMyWorldTimer::UpdateHUD, 0.2, true, 0.2);
+		SetInputMode(FInputModeUIOnly());
 	}
-	GetWorldTimerManager().SetTimer(UpdateHandle, this, &AMyWorldTimer::UpdateHUD, 0.2, true, 0.2);
-	SetInputMode(FInputModeUIOnly());
-
 }
 
 
@@ -243,13 +255,13 @@ void AMyWorldTimer::SaveWinnerInfo()
 {
 	if (_gameInstance)
 	{
-		FCharacterInfo characterInfo = FCharacterInfo{ _playerState->_CharacterColor,_playerState->_CharacterName,_gameMode->GetNumOfFinished()};
+		FCharacterInfo characterInfo = FCharacterInfo{ _playerState->_characterInfo._characterMesh,_playerState->_characterInfo._CharacterName,_gameMode->GetNumOfFinished()};
 		_gameInstance->_winner.Push(characterInfo);
 	}
 	else
 	{
 		_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
-		FCharacterInfo characterInfo = FCharacterInfo{ _playerState->_CharacterColor,_playerState->_CharacterName,_gameMode->GetNumOfFinished() };
+		FCharacterInfo characterInfo = FCharacterInfo{ _playerState->_characterInfo._characterMesh,_playerState->_characterInfo._CharacterName,_gameMode->GetNumOfFinished() };
 		_gameInstance->_winner.Push(characterInfo);
 	}
 	

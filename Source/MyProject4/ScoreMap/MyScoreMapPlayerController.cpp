@@ -13,7 +13,7 @@
 #include "GameFramework/Character.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "MyScoreMapGameStateBase.h"
-
+#include "Blueprint/WidgetBlueprintLibrary.h"
 
 AMyScoreMapPlayerController::AMyScoreMapPlayerController()
 {
@@ -45,6 +45,21 @@ void AMyScoreMapPlayerController::BeginPlay()
 		}
 	), 10, false);
 
+}
+
+void AMyScoreMapPlayerController::PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel)
+{
+	if (IsLocalPlayerController())
+	{
+		TArray<UUserWidget*> widgets;
+		UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), widgets, UUserWidget::StaticClass());
+
+		for (auto widget : widgets)
+		{
+			widget->RemoveFromParent();
+		}
+	}
+	Super::PreClientTravel(PendingURL, TravelType, bIsSeamlessTravel);
 }
 
 

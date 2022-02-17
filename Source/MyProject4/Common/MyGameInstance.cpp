@@ -3,6 +3,9 @@
 
 #include "MyGameInstance.h"
 #include "OnlineSessionSettings.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/GameModeBase.h"
 
 
 const static FName SESSION_NAME = TEXT("TwistRunGame");
@@ -30,7 +33,7 @@ void UMyGameInstance::Init()
 	{
 		GEngine->OnNetworkFailure().AddUObject(this, &UMyGameInstance::OnNetworkFailure);
 	}
-
+	_host = false;
 }
 
 void UMyGameInstance::Host(const bool& LanCheck)
@@ -38,6 +41,7 @@ void UMyGameInstance::Host(const bool& LanCheck)
 	if (_sessionInterface.IsValid())
 	{
 		_lanCheck = LanCheck;
+		_host = true;
 		auto existingSession = _sessionInterface->GetNamedSession(SESSION_NAME);
 		if (existingSession != nullptr)
 		{
@@ -65,6 +69,7 @@ void UMyGameInstance::CreateSession()
 		sessionSettings.bAllowJoinInProgress = true;
 		sessionSettings.bAllowJoinViaPresence = true;
 		
+		_currentSessionName = SESSION_NAME;
 		_sessionInterface->CreateSession(0, SESSION_NAME, sessionSettings);
 	}
 }
@@ -84,10 +89,10 @@ void UMyGameInstance::Join()
 		return;
 	}
 
-	if (_selectedIndex.IsSet() &&_sessionSearch->SearchResults.Num())
+	if (_sessionSearch->SearchResults.Num())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Join Session with Search Result"));
-		_sessionInterface->JoinSession(0, SESSION_NAME, _sessionSearch->SearchResults[_selectedIndex.GetValue()]);
+		_sessionInterface->JoinSession(0, SESSION_NAME, _sessionSearch->SearchResults[_selectedIndex]);
 	}
 
 }
@@ -136,12 +141,15 @@ void UMyGameInstance::OnCreateSessionComplete(FName sessionName, bool success)
 		return;
 
 	world->ServerTravel("/Game/map/ReadyMap?listen");
+
+	_host = true;
 }
 
 void UMyGameInstance::OnDestroySessionComplete(FName sessionName, bool success)
 {
 	if (success)
 	{
+		_host = false;
 	}
 }
 
@@ -151,6 +159,7 @@ void UMyGameInstance::OnNetworkFailure(UWorld* world, UNetDriver* netDriver, ENe
 	if (!ensure(playerController != nullptr))
 		return;
 
+	_host = false;
 	playerController->ClientTravel("/Game/map/TitleMap",ETravelType::TRAVEL_Absolute);
 }
 
@@ -186,13 +195,42 @@ void UMyGameInstance::OnJoinSessionComplete(FName sessionName, EOnJoinSessionCom
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Joined Session"));
+	_currentSessionName = sessionName;
+	_currentSessionAddress = address;
+	_host = false;
+	playerController->ClientTravel(_currentSessionAddress, ETravelType::TRAVEL_Absolute);
+	
+}
 
-	playerController->ClientTravel(address, ETravelType::TRAVEL_Absolute);
+void UMyGameInstance::UpdateGameSession_Implementation(FName sessionName, bool advertise)
+{
+	FOnlineSessionSettings* mySession = _sessionInterface->GetSessionSettings(sessionName);
+	if (mySession)
+	{
+		mySession->bShouldAdvertise = advertise;
+		mySession->bAllowJoinInProgress = advertise;
+	}
+	_sessionInterface->UpdateSession(sessionName, *(mySession), true);
+}
 
+void UMyGameInstance::MyServerTravel_Implementation(const FString& mapPath, const FString& additionalOption, bool bAbsolute)
+{
+	//Default paths to Maps folder and GameModes folder
+	//Game/map/simplemap?game=Game/path?listen
+	//game = / Game / Blueprints / GameModes / TDMGM_BP.TDMGM_BP_C
 
-	FOnlineSessionSettings setting = _sessionSearch->SearchResults[_selectedIndex.GetValue()].Session.SessionSettings;
-	_sessionInterface->UpdateSession(sessionName, setting, true);
+	FString travelURL = mapPath + additionalOption;
+	UGameplayStatics::GetGameMode(GetWorld())->ProcessServerTravel(travelURL, bAbsolute);
 
+	
+	//TArray<UUserWidget*> widgets;
+	//UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), widgets, UUserWidget::StaticClass());
+	//for (auto widget : widgets)
+	//{
+	//	widget->RemoveFromParent();
+	//}
+
+	//GetWorld()->SeamlessTravel(travelURL, bAbsolute);
 
 }
+

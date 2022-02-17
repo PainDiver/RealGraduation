@@ -16,13 +16,3 @@ void AReadyRoomPlayerState::BeginPlay()
 	Super::BeginPlay();
 }
 
-void AReadyRoomPlayerState::CopyProperties(APlayerState* playerstate)
-{
-	Super::CopyProperties(playerstate);
-}
-
-
-void AReadyRoomPlayerState::DispatchCopyProperties(APlayerState* playerstate)
-{
-	Super::DispatchCopyProperties(playerstate);
-}

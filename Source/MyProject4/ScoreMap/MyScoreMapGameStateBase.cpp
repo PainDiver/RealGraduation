@@ -22,8 +22,6 @@ void AMyScoreMapGameStateBase::BeginPlay()
 
 }
 
-
-
 void AMyScoreMapGameStateBase::FindAllPlayerControllerHideAllWidget_Implementation()
 {
 
@@ -32,14 +30,7 @@ void AMyScoreMapGameStateBase::FindAllPlayerControllerHideAllWidget_Implementati
 	for (auto playerController : OutActors)
 	{
 		AMyScoreMapPlayerController* pc = Cast<AMyScoreMapPlayerController>(playerController);
-		if (pc->_ChattingHUDOverlay)
-		{
-			pc->_ChattingHUDOverlay->RemoveFromParent();
-		}
-		if (pc->_ScoreHUDOverlay)
-		{
-			pc->_ScoreHUDOverlay->RemoveFromParent();
-		}
+
 		pc->GetWorldTimerManager().ClearTimer(pc->_timerHandle);
 		pc->GetWorldTimerManager().ClearTimer(pc->_timerHandle2);
 	}
@@ -52,14 +43,6 @@ void AMyScoreMapGameStateBase::HideAllWidget_Implementation()
 	APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	AMyScoreMapPlayerController* pc = Cast<AMyScoreMapPlayerController>(playerController);
 
-	if (pc->_ChattingHUDOverlay)
-	{
-		pc->_ChattingHUDOverlay->RemoveFromParent();
-	}
-	if (pc->_ScoreHUDOverlay)
-	{
-		pc->_ScoreHUDOverlay->RemoveFromParent();
-	}
 	pc->GetWorldTimerManager().ClearTimer(pc->_timerHandle);
 	pc->GetWorldTimerManager().ClearTimer(pc->_timerHandle2);
 }

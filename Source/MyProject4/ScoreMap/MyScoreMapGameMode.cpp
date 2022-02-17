@@ -19,6 +19,8 @@ AMyScoreMapGameMode::AMyScoreMapGameMode()
 	PlayerControllerClass = AMyScoreMapPlayerController::StaticClass();
 	GameStateClass = AMyScoreMapGameStateBase::StaticClass();
 	DefaultPawnClass = AMyCharacter::StaticClass();
+
+
 }
 
 // Called when the game starts or when spawned

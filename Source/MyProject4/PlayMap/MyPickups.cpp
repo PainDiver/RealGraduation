@@ -36,12 +36,8 @@ void AMyPickups::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor
 	_character = Cast<AMyCharacter>(OtherActor);
 	if (_character)
 	{
-		SetActorEnableCollision(false);
-		_mesh->SetVisibility(false);
-		SetOwner(_character);
 		if (HasAuthority())
 		{
-			_character->GetActionComponent()->_interactDele.AddDynamic(this,&AMyPickups::UseItem);
 			RPCAdd(_character);
 		}
 	}
@@ -53,26 +49,10 @@ void AMyPickups::RPCAdd_Implementation(AMyCharacter* character)
 	_playerState = Cast<AMyPlayerState>(character->GetPlayerState());
 	if (_playerState->_Inventory.Num() < 2)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Item got"));
+		SetActorEnableCollision(false);
+		_mesh->SetVisibility(false);
+		SetOwner(_character);
 		_playerState->_Inventory.Add(this);
-	}
-
-}
-
-
-void AMyPickups::UseItem_Implementation(AActor* Caller)
-{
-	AMyCharacter* owner = Cast<AMyCharacter>(Caller);
-	AMyPlayerState* playerState = Cast<AMyPlayerState>(owner->GetPlayerState());
-
-	if (!owner || !playerState) return;
-	if (playerState->_Inventory.Num() == 0) return;
-
-	AMyPickups* item = playerState->_Inventory.Pop();
-
-	if (item)
-	{
-		item->Activate();
 	}
 
 }

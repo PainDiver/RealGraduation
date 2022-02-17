@@ -24,11 +24,13 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupInputComponent() override;
 
+	virtual void PreClientTravel(const FString& PendingURL,ETravelType TravelType,bool bIsSeamlessTravel) override;
 	
+
+
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Chatting")
 	void commit(const FString& message);
 	virtual void commit_Implementation(const FString& message);

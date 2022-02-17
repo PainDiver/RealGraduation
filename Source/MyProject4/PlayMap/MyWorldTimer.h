@@ -39,6 +39,8 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel) override;
+
 
 	UFUNCTION(Server, BlueprintCallable,Reliable)
 	void NotifyArrival();
@@ -53,9 +55,6 @@ public:
 	UFUNCTION(Server, Unreliable)
 	void UpdateHUD();
 
-
-	UFUNCTION(Server, Unreliable)
-		void SetCharacterName(const FString& name);
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
@@ -107,7 +106,7 @@ private:
 	UFUNCTION(Client, Unreliable)
 		void TurnOnFinalTimerUI();
 
-	UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION(NetMulticast,BlueprintCallable, Reliable)
 		void AllMightyMode();
 
 

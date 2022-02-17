@@ -9,17 +9,18 @@
 #include "Net/UnrealNetWork.h"
 #include "ReadyRoomPlayerController.h"
 #include "../PlayMap/MyPlayerState.h"
+#include "../Common/MyGameInstance.h"
+#include "ReadyRoomPlayerState.h"
 
 AMyReadyRoomGameModeBase::AMyReadyRoomGameModeBase()
 {
-	PrimaryActorTick.bCanEverTick = true;
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	//_userNum=0;
 	//_maxNum = 8;
 	
 
 	PlayerControllerClass = AReadyRoomPlayerController::StaticClass();
-	PlayerStateClass = AMyPlayerState::StaticClass();
+	PlayerStateClass = AReadyRoomPlayerState::StaticClass();
 	GameStateClass = AReadyRoomGameStateBase::StaticClass();
 	DefaultPawnClass = AMyCharacter::StaticClass();
 	
@@ -30,8 +31,6 @@ void AMyReadyRoomGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	AGameStateBase* gameState = UGameplayStatics::GetGameState(GetWorld());
-	_gameState = Cast<AReadyRoomGameStateBase>(gameState);
 
 }
 
@@ -52,7 +51,10 @@ APlayerController* AMyReadyRoomGameModeBase::Login(UPlayer* NewPlayer, ENetRole 
 	//_userNum++;
 	//if (_userNum <= _maxNum)
 	//{
-		return Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
+	/*UMyGameInstance* instance = Cast<UMyGameInstance>(GetGameInstance());
+	instance->UpdateGameSession(instance->_currentSessionName, true, false);*/
+
+	return Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
 	//}
 	//_userNum--;
 
@@ -61,7 +63,11 @@ APlayerController* AMyReadyRoomGameModeBase::Login(UPlayer* NewPlayer, ENetRole 
 
 void AMyReadyRoomGameModeBase::Logout(AController* Exiting)
 {
+	/*UMyGameInstance* instance = Cast<UMyGameInstance>(GetGameInstance());
+	instance->UpdateGameSession(instance->_currentSessionName,false,true);*/
+
 	Super::Logout(Exiting);
 	//_userNum--;
 	
 }
+
