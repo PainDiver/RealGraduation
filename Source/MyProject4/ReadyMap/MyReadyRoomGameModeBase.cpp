@@ -11,6 +11,14 @@
 #include "../PlayMap/MyPlayerState.h"
 #include "../Common/MyGameInstance.h"
 #include "ReadyRoomPlayerState.h"
+#include "GameFrameWork/GameStateBase.h"
+
+#include "Net/OnlineEngineInterface.h"
+#include "GameFramework/OnlineSession.h"
+#include "OnlineSubsystemTypes.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "OnlineSessionSettings.h"
+
 
 AMyReadyRoomGameModeBase::AMyReadyRoomGameModeBase()
 {
@@ -30,8 +38,15 @@ AMyReadyRoomGameModeBase::AMyReadyRoomGameModeBase()
 void AMyReadyRoomGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
 
+}
+
+void AMyReadyRoomGameModeBase::Tick(float DeltaTimer)
+{
+	Super::Tick(DeltaTimer);
+	
+	//_gameInstance->UpdateGameSession(_gameInstance->_currentSessionName);
 }
 
 
@@ -40,7 +55,20 @@ void AMyReadyRoomGameModeBase::PreLogin(const FString& Options, const FString& A
 {
 	//if (_userNum <= _maxNum)
 	//{
+	if (GEngine->IsEditor())
+	{
 		Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
+		return;
+	}
+
+	if (_gameInstance->CheckOpenPublicConnection(true))
+	{
+		return;
+	}
+	
+
+
+	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
 	//}
 }
 
@@ -53,7 +81,7 @@ APlayerController* AMyReadyRoomGameModeBase::Login(UPlayer* NewPlayer, ENetRole 
 	//{
 	/*UMyGameInstance* instance = Cast<UMyGameInstance>(GetGameInstance());
 	instance->UpdateGameSession(instance->_currentSessionName, true, false);*/
-
+	
 	return Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
 	//}
 	//_userNum--;
@@ -63,11 +91,14 @@ APlayerController* AMyReadyRoomGameModeBase::Login(UPlayer* NewPlayer, ENetRole 
 
 void AMyReadyRoomGameModeBase::Logout(AController* Exiting)
 {
-	/*UMyGameInstance* instance = Cast<UMyGameInstance>(GetGameInstance());
-	instance->UpdateGameSession(instance->_currentSessionName,false,true);*/
+
+	if (!Exiting->GetNetOwningPlayer())
+	{
+		_gameInstance->CheckOpenPublicConnection(false);
+		Super::Logout(Exiting);
+		return;
+	}
 
 	Super::Logout(Exiting);
-	//_userNum--;
-	
 }
 

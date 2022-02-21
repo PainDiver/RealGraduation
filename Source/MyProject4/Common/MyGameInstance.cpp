@@ -6,10 +6,14 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/GameModeBase.h"
+#include "GameFrameWork/GameStateBase.h"
+#include "GameFramework/OnlineSession.h"
+#include "OnlineSubsystemTypes.h"
+#include "../ReadyMap/ReadyRoomGameStateBase.h"
+#include "../PlayMap/MyPlayerState.h"
 
-
-const static FName SESSION_NAME = TEXT("TwistRunGame");
-const static uint8 MAX_PLAYER = 8;
+uint8 UMyGameInstance::MAX_PLAYER = 8;
+FName UMyGameInstance::SESSION_NAME = TEXT("TwistRunGame");
 
 
 void UMyGameInstance::Init()
@@ -19,8 +23,7 @@ void UMyGameInstance::Init()
 	{
 		_sessionInterface = subsystem->GetSessionInterface();
 		if (_sessionInterface.IsValid())
-		{
-			
+		{			
 			_sessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMyGameInstance::OnDestroySessionComplete);
 			_sessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this,&UMyGameInstance::OnCreateSessionComplete);
 			_sessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMyGameInstance::OnFindSessionComplete);
@@ -33,7 +36,6 @@ void UMyGameInstance::Init()
 	{
 		GEngine->OnNetworkFailure().AddUObject(this, &UMyGameInstance::OnNetworkFailure);
 	}
-	_host = false;
 }
 
 void UMyGameInstance::Host(const bool& LanCheck)
@@ -41,7 +43,7 @@ void UMyGameInstance::Host(const bool& LanCheck)
 	if (_sessionInterface.IsValid())
 	{
 		_lanCheck = LanCheck;
-		_host = true;
+
 		auto existingSession = _sessionInterface->GetNamedSession(SESSION_NAME);
 		if (existingSession != nullptr)
 		{
@@ -60,18 +62,26 @@ void UMyGameInstance::CreateSession()
 {
 	if (_sessionInterface.IsValid())
 	{
-		FOnlineSessionSettings sessionSettings;
-		sessionSettings.bIsLANMatch = _lanCheck;
-		sessionSettings.NumPublicConnections = MAX_PLAYER;
-		sessionSettings.bShouldAdvertise = true;
-		sessionSettings.bUseLobbiesIfAvailable = true;
-		sessionSettings.bUsesPresence = true;
-		sessionSettings.bAllowJoinInProgress = true;
-		sessionSettings.bAllowJoinViaPresence = true;
-		
+		if (!_lastSettings.IsValid())
+		{
+			_lastSettings = MakeShareable(new FOnlineSessionSettings());
+			_lastSettings->bIsLANMatch = _lanCheck;
+			_lastSettings->NumPublicConnections = MAX_PLAYER;
+			_lastSettings->bShouldAdvertise = true;
+			_lastSettings->bUseLobbiesIfAvailable = true;
+			_lastSettings->bUsesPresence = true;
+			_lastSettings->bAllowJoinInProgress = true;
+			_lastSettings->bAllowJoinViaPresence = true;
+			_lastSettings->bAllowInvites = true;
+			_lastSettings->Settings.Emplace(SESSION_NAME);
+			_lastSettings->bUsesStats = true;
+		}
+
 		_currentSessionName = SESSION_NAME;
-		_sessionInterface->CreateSession(0, SESSION_NAME, sessionSettings);
+
+		_sessionInterface->CreateSession(0, SESSION_NAME, *(_lastSettings));	
 	}
+	
 }
 
 
@@ -99,11 +109,18 @@ void UMyGameInstance::Join()
 
 void UMyGameInstance::Find()
 {
+	if (_sessionSearch.IsValid())
+	{
+		_sessionSearch.Reset();
+	}
 	_sessionSearch = MakeShareable(new FOnlineSessionSearch());
+
 	if(_sessionSearch.IsValid())
 	{
 		_sessionSearch->MaxSearchResults = 100;
 		_sessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+		_sessionSearch->bIsLanQuery = _lanCheck;
+
 		_sessionInterface->FindSessions(0, _sessionSearch.ToSharedRef());	
 		UE_LOG(LogTemp, Warning, TEXT("Session Searched"));
 	}
@@ -120,7 +137,8 @@ TArray<FSessionInfo> UMyGameInstance::GetSessions()
 	for (int i = 0; i < _sessionSearch->SearchResults.Num(); i++)
 	{
 		const auto& session = _sessionSearch->SearchResults[i];
-		_sessionInfo.Add(FSessionInfo{ session.PingInMs, MAX_PLAYER - session.Session.NumOpenPublicConnections,session.Session.OwningUserName });
+
+		_sessionInfo.Add(FSessionInfo{ session.PingInMs,MAX_PLAYER - session.Session.NumOpenPublicConnections,session.Session.OwningUserName });
 	}
 
 	return _sessionInfo;
@@ -133,6 +151,13 @@ void UMyGameInstance::SelectSession(const int& index)
 	_selectedIndex=index;
 }
 
+void UMyGameInstance::DestroySession()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "Destroy Session");
+	_sessionInterface->DestroySession(_currentSessionName);
+
+}
+
 
 void UMyGameInstance::OnCreateSessionComplete(FName sessionName, bool success)
 {
@@ -140,27 +165,65 @@ void UMyGameInstance::OnCreateSessionComplete(FName sessionName, bool success)
 	if (!ensure(world != nullptr))
 		return;
 
-	world->ServerTravel("/Game/map/ReadyMap?listen");
+	world->ServerTravel("/Game/map/ReadyMap?game=/Game/ReadyRoomMap/MyReadyRoomGameModeBase_BP.MyReadyRoomGameModeBase_BP_C?listen");
 
-	_host = true;
+	CheckOpenPublicConnection(true);
+
 }
 
 void UMyGameInstance::OnDestroySessionComplete(FName sessionName, bool success)
 {
+	if (_exitRequest)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "OnDestroy");
+		UGameViewportClient* viewPortClient = GetGameViewportClient();
+		if (viewPortClient)
+		{
+			if (viewPortClient->OnWindowCloseRequested().IsBound())
+			{
+				viewPortClient->OnWindowCloseRequested().Unbind();
+			}
+			viewPortClient->OnWindowCloseRequested().BindLambda([&]()->bool {return true; });
+			FGenericPlatformMisc::RequestExit(true);
+		}
+	}
+
 	if (success)
 	{
-		_host = false;
+		APlayerController* playerController = GetFirstLocalPlayerController();
+		if (!ensure(playerController != nullptr))
+			return;
+
+		playerController->ClientTravel("/Game/map/TitleMap?game=/Game/TitleMap/MyTitleGameModeBase_BP.MyTitleGameModeBase_BP_C", ETravelType::TRAVEL_Absolute);
 	}
 }
 
 void UMyGameInstance::OnNetworkFailure(UWorld* world, UNetDriver* netDriver, ENetworkFailure::Type failureType, const FString& error)
 {
+	UGameViewportClient* viewPortClient = GetGameViewportClient();
+	if (viewPortClient)
+	{
+		if (viewPortClient->OnWindowCloseRequested().IsBound())
+		{
+			viewPortClient->OnWindowCloseRequested().Unbind();
+		}
+		viewPortClient->OnWindowCloseRequested().BindLambda([&]()->bool {return true; });
+	}
+	
 	APlayerController* playerController = GetFirstLocalPlayerController();
 	if (!ensure(playerController != nullptr))
 		return;
-
-	_host = false;
-	playerController->ClientTravel("/Game/map/TitleMap",ETravelType::TRAVEL_Absolute);
+	
+	auto existingSession = _sessionInterface->GetNamedSession(SESSION_NAME);
+	if (existingSession != nullptr)
+	{
+		_sessionInterface->DestroySession(SESSION_NAME);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "Session Destroyed for no network");
+	}
+	else
+	{
+		playerController->ClientTravel("/Game/map/TitleMap?game=/Game/TitleMap/MyTitleGameModeBase_BP.MyTitleGameModeBase_BP_C", ETravelType::TRAVEL_Absolute);
+	}
 }
 
 
@@ -197,21 +260,84 @@ void UMyGameInstance::OnJoinSessionComplete(FName sessionName, EOnJoinSessionCom
 
 	_currentSessionName = sessionName;
 	_currentSessionAddress = address;
-	_host = false;
+
 	playerController->ClientTravel(_currentSessionAddress, ETravelType::TRAVEL_Absolute);
 	
 }
 
 void UMyGameInstance::UpdateGameSession_Implementation(FName sessionName, bool advertise)
 {
-	FOnlineSessionSettings* mySession = _sessionInterface->GetSessionSettings(sessionName);
-	if (mySession)
+	IOnlineSubsystem* subsystem = IOnlineSubsystem::Get();
+	if (subsystem != nullptr)
 	{
-		mySession->bShouldAdvertise = advertise;
-		mySession->bAllowJoinInProgress = advertise;
+		_sessionInterface = subsystem->GetSessionInterface();
 	}
-	_sessionInterface->UpdateSession(sessionName, *(mySession), true);
+	if(_lanCheck)
+	{ 
+		return;
+	}
+	if (_lastSettings)
+	{
+		FOnlineSessionSettings updatedSession = *(_lastSettings);
+		updatedSession.bShouldAdvertise = advertise;
+		updatedSession.bAllowJoinInProgress = advertise;
+		updatedSession.NumPublicConnections = UGameplayStatics::GetGameState(GetWorld())->PlayerArray.Num();
+		
+		_sessionInterface->UpdateSession(_currentSessionName, updatedSession);
+
+		GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "Session Updating");
+	}
 }
+
+
+void UMyGameInstance::OnDestroySessionServerMigration(FName sessionName, bool success)
+{
+	if (!_lastSettings.IsValid())
+	{
+		_lastSettings = MakeShareable(new FOnlineSessionSettings());
+		_lastSettings->bIsLANMatch = _lanCheck;
+		_lastSettings->NumPublicConnections =MAX_PLAYER;
+		_lastSettings->bShouldAdvertise = true;
+		_lastSettings->bUseLobbiesIfAvailable = true;
+		_lastSettings->bUsesPresence = true;
+		_lastSettings->bAllowJoinInProgress = true;
+		_lastSettings->bAllowJoinViaPresence = true;
+		_lastSettings->bAllowInvites = true;
+		_lastSettings->Settings.Emplace(SESSION_NAME);
+		_lastSettings->bUsesStats = true;
+	}	
+	
+	GetCurrentSessionInterface()->CreateSession(0, _currentSessionName, *(_lastSettings));
+}
+
+void UMyGameInstance::OnDestroySessionClientMigration(FName sessionName, bool success)
+{
+	if (success)
+	{
+		_sessionSearch->MaxSearchResults = 1;
+		_sessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+		_sessionSearch->bIsLanQuery = _lanCheck;
+
+		GetCurrentSessionInterface()->OnFindSessionsCompleteDelegates.AddUObject(this, &UMyGameInstance::OnFindSessionComplete);
+		GetCurrentSessionInterface()->FindSessions(0, _sessionSearch.ToSharedRef());
+	}
+}
+
+
+
+void UMyGameInstance::OnFindSessionMigration(bool success)
+{
+	GetCurrentSessionInterface()->OnFindSessionsCompleteDelegates.Clear();
+
+	if (success && _sessionSearch.IsValid())
+	{
+		GetCurrentSessionInterface()->JoinSession(0, _currentSessionName, _sessionSearch->SearchResults[0]);
+	}
+	_sessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMyGameInstance::OnFindSessionComplete);
+}
+
+
+
 
 void UMyGameInstance::MyServerTravel_Implementation(const FString& mapPath, const FString& additionalOption, bool bAbsolute)
 {
@@ -234,3 +360,41 @@ void UMyGameInstance::MyServerTravel_Implementation(const FString& mapPath, cons
 
 }
 
+bool UMyGameInstance::CheckOpenPublicConnection(bool isIn)
+{
+	if (GEngine->IsEditor())
+	{
+		return true;
+	}
+
+	if (!GetCurrentSessionInterface())
+	{
+		IOnlineSubsystem* subsystem = IOnlineSubsystem::Get();
+		if (subsystem != nullptr)
+		{
+			_sessionInterface = subsystem->GetSessionInterface();
+		}
+	}
+	FNamedOnlineSession* session = _sessionInterface->GetNamedSession(_currentSessionName);
+	
+	if (!session)
+	{
+		return false;
+	}
+	if (isIn)
+	{
+		if (session->NumOpenPublicConnections <=0)
+		{
+			return false;
+		}
+		session->NumOpenPublicConnections -= 1;
+		return true;
+	}
+	else
+	{
+		session->NumOpenPublicConnections += 1;
+		return true;
+	}
+
+	
+}

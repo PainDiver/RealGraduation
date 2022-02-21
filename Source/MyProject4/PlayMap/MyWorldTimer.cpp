@@ -255,13 +255,13 @@ void AMyWorldTimer::SaveWinnerInfo()
 {
 	if (_gameInstance)
 	{
-		FCharacterInfo characterInfo = FCharacterInfo{ _playerState->_characterInfo._characterMesh,_playerState->_characterInfo._CharacterName,_gameMode->GetNumOfFinished()};
+		FCharacterInfo characterInfo = FCharacterInfo{ _playerState->_characterInfo._characterColor,_playerState->_characterInfo._CharacterName,_gameMode->GetNumOfFinished()};
 		_gameInstance->_winner.Push(characterInfo);
 	}
 	else
 	{
 		_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
-		FCharacterInfo characterInfo = FCharacterInfo{ _playerState->_characterInfo._characterMesh,_playerState->_characterInfo._CharacterName,_gameMode->GetNumOfFinished() };
+		FCharacterInfo characterInfo = FCharacterInfo{ _playerState->_characterInfo._characterColor,_playerState->_characterInfo._CharacterName,_gameMode->GetNumOfFinished() };
 		_gameInstance->_winner.Push(characterInfo);
 	}
 	

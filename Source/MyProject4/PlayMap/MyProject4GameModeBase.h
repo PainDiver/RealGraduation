@@ -54,6 +54,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	inline uint8 GetNumOfFinished() { return _NumOfFinished; }
 
+	UFUNCTION(BlueprintCallable)
+	inline bool IsGameStarted() { return _gameStarted; }
 
 
 
@@ -92,4 +94,8 @@ private:
 	FTimerHandle _timerForCheckConnection;
 
 	FTimerHandle _timerForControl;
+
+	FTimerHandle _delayTimer;
+
+	
 };

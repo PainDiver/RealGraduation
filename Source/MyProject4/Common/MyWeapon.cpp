@@ -62,7 +62,7 @@ void AMyWeapon::LaunchServer_Implementation(AActor* OtherActor,const EWeaponKind
 		{
 			FVector dir{ pawn->GetActorLocation() - GetActorLocation() };
 			dir.Normalize();
-			pawn->LaunchPawn(dir * 700, false, true);
+			pawn->LaunchCharacter(dir * 700, false, true);
 		}
 	}
 	default:

@@ -6,9 +6,11 @@
 #include "Engine/GameInstance.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
-
+#include "OnlineSessionSettings.h"
 #include "MyGameInstance.generated.h"
 
+
+DECLARE_DELEGATE(FDisconnectDelegate)
 
 /**
  * 
@@ -21,7 +23,7 @@ struct FCharacterInfo
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FLinearColor _characterMesh;
+		FLinearColor _characterColor;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString _CharacterName="DefaultPlayer";
@@ -62,24 +64,6 @@ public:
 
 	virtual void Init();
 
-	UFUNCTION(BlueprintCallable, Category = "Session")
-	void Host(const bool& LanCheck);
-	
-	UFUNCTION(BlueprintCallable, Category = "Session")
-	void Join();
-
-	UFUNCTION(BlueprintCallable,Category ="Session")
-	void Find();
-
-	UFUNCTION()
-	void CreateSession();
-
-	UFUNCTION(BlueprintCallable,Category = "Session")
-	void SelectSession(const int& index);
-
-	UFUNCTION(BlueprintCallable,Category = "Session")
-	TArray<FSessionInfo> GetSessions();
-
 
 	//UI Resources
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
@@ -115,6 +99,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
 	bool _gameStarted;
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
 	FCharacterInfo _characterInfo;
 
@@ -122,27 +107,54 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
 	TArray<FCharacterInfo> _winner;
 
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
 	TArray<FSessionInfo> _sessionInfo;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
-		bool _lanCheck;
+		bool _lanCheck = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
 		int _numOfPlayerInCurrentSession;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
+
 	FName _currentSessionName;
 
 
-
-	UPROPERTY()
 	int _selectedIndex;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "Session")
-	bool _host = false;
 
+	FString _currentSessionAddress;
+
+	TSharedPtr<FOnlineSessionSettings> _lastSettings;
+
+	TSharedPtr<class FOnlineSessionSearch> _sessionSearch;
+
+	static FName SESSION_NAME;
+
+	static uint8 MAX_PLAYER;
+
+
+	FDisconnectDelegate _disconnectDelegate;
+
+
+	UFUNCTION(BlueprintCallable, Category = "Session")
+		void Host(const bool& LanCheck);
+
+	UFUNCTION(BlueprintCallable, Category = "Session")
+		void Join();
+
+	UFUNCTION(BlueprintCallable, Category = "Session")
+		void Find();
+
+	UFUNCTION()
+		void CreateSession();
+
+
+	UFUNCTION(BlueprintCallable, Category = "Session")
+		void SelectSession(const int& index);
+
+	UFUNCTION(BlueprintCallable, Category = "Session")
+		TArray<FSessionInfo> GetSessions();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 		void UpdateGameSession(FName sessionName, bool advertise = true);
@@ -151,13 +163,18 @@ public:
 		void MyServerTravel(const FString& mapName, const FString& additionalOption, bool bAbsolute);
 
 
+	UFUNCTION(BlueprintCallable)
+		void DestroySession();
+
+	bool CheckOpenPublicConnection(bool isIn);
+
 	
-	
-private:
-	//callback for server hosting, joining, destroying
+	inline IOnlineSessionPtr GetCurrentSessionInterface() { return _sessionInterface; }
+
 	void OnCreateSessionComplete(FName sessionName, bool success);
 
 	void OnDestroySessionComplete(FName sessionName, bool success);
+
 
 	void OnFindSessionComplete(bool success);
 
@@ -165,11 +182,21 @@ private:
 
 	void OnNetworkFailure(UWorld* world, UNetDriver* netDriver, ENetworkFailure::Type failureType, const FString& error);
 
+	void OnDestroySessionServerMigration(FName sessionName, bool success);
+
+	void OnDestroySessionClientMigration(FName sessionName, bool success);
+
+	void OnFindSessionMigration(bool success);
+
+	bool _exitRequest =false;
+
+private:
+	//callback for server hosting, joining, destroying
+	
 	IOnlineSessionPtr _sessionInterface;
 
-	FString _currentSessionAddress;
-
-	TSharedPtr<class FOnlineSessionSearch> _sessionSearch;
+	
 
 	
+
 };

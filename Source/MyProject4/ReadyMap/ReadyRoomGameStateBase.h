@@ -5,11 +5,15 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
 #include "../Interface/MyChattingGameStateBaseInterface.h"
+#include "UObject/CoreOnlineFwd.h"
 #include "ReadyRoomGameStateBase.generated.h"
 
 /**
  * 
  */
+
+
+
 UCLASS()
 class MYPROJECT4_API AReadyRoomGameStateBase : public AGameStateBase, public IMyChattingGameStateBaseInterface
 {
@@ -42,6 +46,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	inline bool GetIsStartable() const{ return _bIsStartable; }
+
 
 private:
 

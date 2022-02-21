@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
+#include "../Common/MyGameInstance.h"
 #include "MyGameStateBase.generated.h"
 
 /**
@@ -38,15 +39,21 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 		void LetPlayerMove_Client();
 
+	UFUNCTION(Server, Reliable)
+		void AddConnectedPlayerInfo(FCharacterInfo info);
+
+
 	UPROPERTY(replicated,BlueprintReadOnly)
 	float _finalTimer;
 
 	UPROPERTY(replicated, BlueprintReadOnly)
 		float _StartTimer;
 
-	UPROPERTY(replicated, BlueprintReadOnly)
-		int _numOfConnectedPlayerInCurrentSession;
 
 	UPROPERTY(replicated, BlueprintReadOnly)
 		bool _gameStarted;
+
+
+	UPROPERTY(replicated, BlueprintReadOnly)
+		TArray<FCharacterInfo> _connectedPlayersInfo;
 };

@@ -27,36 +27,19 @@ AMyScoreMapGameMode::AMyScoreMapGameMode()
 void AMyScoreMapGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-
-	AGameStateBase* gameState = UGameplayStatics::GetGameState(GetWorld());
-	_gameState = Cast<AMyScoreMapGameStateBase>(gameState);
-
-
 }
 
 
 
 void AMyScoreMapGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
-	if ((Cast<UMyGameInstance>(GetGameInstance())->_gameStarted))
-	{
-		return;
-	}
-	else
-	{
-		Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
-	}
+	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
+	
 }
 
 
 APlayerController* AMyScoreMapGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
-	if ((Cast<UMyGameInstance>(GetGameInstance())->_gameStarted))
-	{
-		return NULL;
-	}
-	else
-	{
-		return Super::Login(NewPlayer, InRemoteRole, Options, Portal, UniqueId, ErrorMessage);
-	}
+	return Super::Login(NewPlayer, InRemoteRole, Options, Portal, UniqueId, ErrorMessage);
+	
 }

@@ -10,6 +10,20 @@
 /**
  *
  */
+
+USTRUCT()
+struct FMigrationPacket
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	bool _IsHost = false;
+
+	UPROPERTY()
+	bool _IsStarted = false;
+};
+
+
 UCLASS()
 class MYPROJECT4_API AMyPlayerState : public APlayerState
 {
@@ -35,7 +49,7 @@ public:
 		TArray<class AMyPickups*> _Inventory;
 
 
-	UPROPERTY(replicatedUsing = OnRep_InitializeColor)
+	UPROPERTY(replicatedUsing = OnRep_InitializeColorAndNotifyConnection)
 	FCharacterInfo _characterInfo;
 
 
@@ -47,9 +61,34 @@ public:
 
 
 	UFUNCTION(Server, Reliable)
-		void NotifyConnection();
+		void SetCharacterInfo_Server(FCharacterInfo info);
+
+	UFUNCTION(Server,Reliable)
+	void OnRep_InitializeColorAndNotifyConnection();
 
 	UFUNCTION(Server, Reliable)
-		void OnRep_InitializeColor();
+		void NotifyConnection();
+
+
+	UFUNCTION(Client, Reliable)
+	void BuildSessionForMigration();
+
+	UFUNCTION(Client, Reliable)
+	void ClientMigration();
+
+	UFUNCTION(Client, UnReliable)
+	void OnRep_ServerMigration();
+
+	void SetMigrationInfo(FMigrationPacket info) { _migrationInfo=info; }
+
+	inline FMigrationPacket GetMigrationInfo() { return _migrationInfo; }
+
+	
+
+private:
+
+	UPROPERTY(replicatedUsing = OnRep_ServerMigration)
+		FMigrationPacket _migrationInfo;
+
 
 };

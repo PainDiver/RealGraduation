@@ -39,23 +39,9 @@ public:
 	
 	//Initial Function
 	
-
 	UFUNCTION(Server,Reliable)
 	void SpawnDefaultWeapon();
-
-
-
-	UFUNCTION(Server, Reliable)
-		void SetCharacterInfo_Server(FCharacterInfo info);
-
-
-	UFUNCTION(Server, Reliable)
-		void SetColor(const FLinearColor& color);
-
-	UFUNCTION(NetMulticast, Reliable)
-		void SetColor_Multi(const FLinearColor& color);
-
-
+	
 
 	//setter getter
 	UFUNCTION(BlueprintCallable)
@@ -83,7 +69,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	inline AMyPlayerState* GetMyPlayerState()const {return _playerState;}
 
-	
+
+	UFUNCTION(Server,Reliable,BlueprintCallable)
+		void SetColor(const FLinearColor& color);
+
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+		void SetColor_Multi(const FLinearColor& color);
 
 
 // public UPROPERTY
@@ -131,13 +122,11 @@ private:
 
 	void ShowCursor();
 
-	
-
 	//Initial Value
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Attack")
-	TSubclassOf<class AMyWeapon> _DefaultWeapon;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Attack")
+	TSubclassOf<class AMyWeapon> _defaultWeaponClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Attack")
 	AMyWeapon* _equippedWeapon;
 
 	//In Game Value

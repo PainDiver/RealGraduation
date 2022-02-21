@@ -40,9 +40,10 @@ void UMyCharacterReplicatorComponent::TickComponent(float DeltaTime, ELevelTick 
 
 void UMyCharacterReplicatorComponent::RespawnCheck_Implementation()
 {
-	if (_owner->GetActorLocation().Z < -2000 || _owner->GetActorLocation().Z > 5000)
+	if (_owner->GetActorLocation().Z < -2000 || _owner->GetActorLocation().Z > 8000)
 	{
 		_owner->SetActorLocation(_respawn);
+		_owner->GetCharacterMovement()->Velocity = FVector(0.f);
 	}
 }
 
@@ -66,7 +67,6 @@ void UMyCharacterReplicatorComponent::OnRep_ServerChange()
 	{
 		_actionComponent->ReplayMove(move);
 	}
-
 }
 
 void UMyCharacterReplicatorComponent::ClearUnacknowledgedMoves(const FCharacterMoveInfo& lastMove)

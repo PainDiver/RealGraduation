@@ -8,6 +8,7 @@
 #include "Components/TextBlock.h"
 #include "GameFramework/PlayerState.h"
 #include "ReadyRoomPlayerState.h"
+#include "../PlayMap/MyPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
 const static uint8 MIN_PLAYER = 2;
@@ -21,7 +22,6 @@ AReadyRoomGameStateBase::AReadyRoomGameStateBase()
 void AReadyRoomGameStateBase::BeginPlay()
 {
 	Super::BeginPlay();
-
 }
 
 void AReadyRoomGameStateBase::Tick(float DeltaTime)
@@ -37,6 +37,9 @@ void AReadyRoomGameStateBase::Tick(float DeltaTime)
 		if (_bIsStartable == true)
 			_bIsStartable = false;
 	}
+
+
+
 }
 
 
@@ -109,4 +112,6 @@ void AReadyRoomGameStateBase::OpenAllWidget_Implementation()
 		pc->_StartHUDOverlay->SetVisibility(ESlateVisibility::Visible);
 	}
 
+	
 }
+

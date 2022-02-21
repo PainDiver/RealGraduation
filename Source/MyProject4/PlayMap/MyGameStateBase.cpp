@@ -16,7 +16,6 @@ AMyGameStateBase::AMyGameStateBase()
 	PrimaryActorTick.bCanEverTick = true;
 	_finalTimer = 0;
 	_StartTimer = 5;
-	_numOfConnectedPlayerInCurrentSession = 0;
 }
 
 void AMyGameStateBase::BeginPlay()
@@ -103,12 +102,18 @@ void AMyGameStateBase::LetPlayerMove_Client_Implementation()
 }
 
 
+void AMyGameStateBase::AddConnectedPlayerInfo_Implementation(FCharacterInfo info)
+{
+	_connectedPlayersInfo.Emplace(info);
+	UE_LOG(LogTemp, Warning, TEXT("Connection!"));
+}
+
 void AMyGameStateBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMyGameStateBase, _finalTimer);
 	DOREPLIFETIME(AMyGameStateBase, _StartTimer);
-	DOREPLIFETIME(AMyGameStateBase, _numOfConnectedPlayerInCurrentSession);
 	DOREPLIFETIME(AMyGameStateBase, _gameStarted);
+	DOREPLIFETIME(AMyGameStateBase, _connectedPlayersInfo);
 }

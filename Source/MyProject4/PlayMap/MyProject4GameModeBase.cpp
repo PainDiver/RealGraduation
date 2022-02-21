@@ -43,10 +43,6 @@ void AMyProject4GameModeBase::BeginPlay()
 	Super::BeginPlay();
 
 	_gameState = GetGameState<AMyGameStateBase>();
-	if (!_gameState)
-	{
-		return;
-	}
 
 	GetWorldTimerManager().SetTimer(_timerForCheckConnection, FTimerDelegate::CreateLambda([&]()
 		{
@@ -61,10 +57,15 @@ void AMyProject4GameModeBase::BeginPlay()
 			{
 				return;
 			}
-			if (instance->_numOfPlayerInCurrentSession == gameState->_numOfConnectedPlayerInCurrentSession || _abandonUnconnectedPlayersWithIn <= 0)
+			if (instance->_numOfPlayerInCurrentSession == gameState->_connectedPlayersInfo.Num() || _abandonUnconnectedPlayersWithIn <= 0)
 			{
-				PrimaryActorTick.bCanEverTick = true;
-				_gameState->_gameStarted = true;
+				GetWorld()->GetTimerManager().SetTimer(_delayTimer, FTimerDelegate::CreateLambda([&]()
+					{
+						PrimaryActorTick.bCanEverTick = true;
+						AMyGameStateBase* gameState = GetGameState<AMyGameStateBase>();
+						gameState->_gameStarted = true;
+						gameState->_connectedPlayersInfo.Empty();
+					}), 12.f, false);
 				GetWorldTimerManager().ClearTimer(_timerForCheckConnection);
 			}
 		}), 0.1, true);

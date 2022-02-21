@@ -68,27 +68,35 @@ void UMyCharacterActionComponent::SimulateMove(const FCharacterMoveInfo& MoveInf
 {
 	if (!_owner.IsValid() || !_owner->_characterMovementComponent) return ;
 	
-	_owner->_characterMovementComponent->SetComponentTickInterval(MoveInfo._deltaTime);
-	AddMoveForward(MoveInfo._deltaTime, MoveInfo._forwardInput);
+	_owner->GetMovementComponent()->SetComponentTickInterval(MoveInfo._deltaTime);
+
+	AddMoveForward(MoveInfo._deltaTime, MoveInfo._forwardInput); //movement component won't behave in Server
 	AddMoveRight(MoveInfo._deltaTime, MoveInfo._rightInput);
 	AddLookUp(MoveInfo._deltaTime, MoveInfo._lookUpInput);
 	AddRotation(MoveInfo._deltaTime, MoveInfo._rotatingInput);
 	Jump(MoveInfo._jumpInput);
+	
 	Greet(MoveInfo._greetInput);
-	Interact(MoveInfo._interactInput);
 	Attack(MoveInfo._attackInput);
+	Interact(MoveInfo._interactInput); //interact should be activated only through server(can affect non-self object)
+	
 }
 
 void UMyCharacterActionComponent::ReplayMove(const FCharacterMoveInfo& MoveInfo)
 {
 	if (!_owner.IsValid() || !_owner->_characterMovementComponent) return;
 
-	_owner->_characterMovementComponent->SetComponentTickInterval(MoveInfo._deltaTime);
-	AddMoveForward(MoveInfo._deltaTime, MoveInfo._forwardInput);
-	AddMoveRight(MoveInfo._deltaTime, MoveInfo._rightInput);
-	Jump(MoveInfo._jumpInput);
+	_owner->GetMovementComponent()->SetComponentTickInterval(MoveInfo._deltaTime);
+
+	// can't use custom dead Reckoning with character movement Component
+	
+	//AddMoveForward(MoveInfo._deltaTime, MoveInfo._forwardInput);
+	//AddMoveRight(MoveInfo._deltaTime, MoveInfo._rightInput);
+	//AddLookUp(MoveInfo._deltaTime, MoveInfo._lookUpInput);
+	//AddRotation(MoveInfo._deltaTime, MoveInfo._rotatingInput);
+	//Jump(MoveInfo._jumpInput); 
+	
 	Greet(MoveInfo._greetInput);
-	Interact(MoveInfo._interactInput);
 	Attack(MoveInfo._attackInput);
 }
 

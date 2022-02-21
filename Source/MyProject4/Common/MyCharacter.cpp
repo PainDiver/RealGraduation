@@ -72,23 +72,15 @@ AMyCharacter::AMyCharacter()
 
 	//custom value
 	_effect = 1.5f;
-
 }
 
 //Called when the game starts or when spawned
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
 	InitializeInstance();
-	
-	if (IsLocallyControlled())
-	{
-		UMyGameInstance* localInstance = Cast<UMyGameInstance>(GetGameInstance());
-		SetCharacterInfo_Server(localInstance->_characterInfo);
-	}
 
-	if (IsLocallyControlled())
+	if (HasAuthority())
 	{
 		SpawnDefaultWeapon();
 	}
@@ -150,21 +142,23 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 }
 
+void AMyCharacter::SpawnDefaultWeapon_Implementation()
+{
+	FActorSpawnParameters param;
+	param.Owner = this;
+	param.Instigator = this;
+	_equippedWeapon = GetWorld()->SpawnActor<AMyWeapon>(_defaultWeaponClass, param);
+	if (_equippedWeapon)
+	{
+		_equippedWeapon->SetWeaponState(EWeaponState::EWS_Equip);
+		_equippedWeapon->SetWeaponName(EWeaponKind::EWK_Fist);
+		GetMesh()->GetSocketByName("AttackSocket")->AttachActor(_equippedWeapon, GetMesh());
+	}
+}
+
 void AMyCharacter::InitializeInstance()
 {
 	_playerState = Cast<AMyPlayerState>(GetPlayerState());
-}
-
-void AMyCharacter::SetCharacterInfo_Server_Implementation(FCharacterInfo info)
-{
-	AMyPlayerState* playerState = Cast<AMyPlayerState>(GetPlayerState());
-	if (!playerState)
-	{
-		return;
-	}
-
-	playerState->_characterInfo = info;
-	playerState->_Initialized = true;
 }
 
 
@@ -174,22 +168,8 @@ void AMyCharacter::SetColor_Implementation(const FLinearColor& color)
 }
 
 void AMyCharacter::SetColor_Multi_Implementation(const FLinearColor& color)
-{	
-	GetMesh()->CreateDynamicMaterialInstance(0)->SetVectorParameterValue(TEXT("Color"), color);	
-}
-
-
-
-void AMyCharacter::SpawnDefaultWeapon_Implementation()
 {
-	if (!_equippedWeapon)
-	{
-		_equippedWeapon = GetWorld()->SpawnActor<AMyWeapon>(_DefaultWeapon, FVector(0, 0, -500), FRotator(), FActorSpawnParameters());
-		_equippedWeapon->SetInstigator(this);
-		_equippedWeapon->SetWeaponState(EWeaponState::EWS_Equip);
-		_equippedWeapon->SetWeaponName(EWeaponKind::EWK_Fist);
-		GetMesh()->GetSocketByName("AttackSocket")->AttachActor(_equippedWeapon, GetMesh());
-	}
+	GetMesh()->CreateDynamicMaterialInstance(0)->SetVectorParameterValue(TEXT("Color"), color);
 }
 
 
@@ -265,10 +245,12 @@ void AMyCharacter::ShowCursor()
 
 	if (controller->bShowMouseCursor)
 	{
+		controller->SetInputMode(FInputModeGameOnly());
 		controller->bShowMouseCursor = false;
 	}
 	else
 	{
+		controller->SetInputMode(FInputModeGameAndUI());
 		controller->bShowMouseCursor = true;
 	}
 	
