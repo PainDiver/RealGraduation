@@ -23,7 +23,9 @@ AReadyRoomPlayerController::AReadyRoomPlayerController()
 void AReadyRoomPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	
 	Initialize();
+	UE_LOG(LogTemp, Warning, TEXT("controller okay"));
 }
 
 
@@ -32,11 +34,11 @@ void AReadyRoomPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 	InputComponent->BindAction(TEXT("Chat"), IE_Pressed, this, &AReadyRoomPlayerController::ShowChattingPannel);
-
 }
 
 void AReadyRoomPlayerController::PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel)
 {
+	InputComponent->ClearActionBindings();
 	if (IsLocalPlayerController())
 	{
 		TArray<UUserWidget*> widgets;
@@ -49,6 +51,7 @@ void AReadyRoomPlayerController::PreClientTravel(const FString& PendingURL, ETra
 	}
 	Super::PreClientTravel(PendingURL,TravelType,bIsSeamlessTravel);
 }
+
 
 
 void AReadyRoomPlayerController::commit_Implementation(const FString& message)

@@ -38,6 +38,10 @@ public:
 	void Transform(float deltaTime);
 
 	UFUNCTION(NetMulticast, Reliable)
+		void Transform_Multi(float deltaTime);
+
+
+	UFUNCTION(NetMulticast, Reliable)
 		void SetTransparency();
 
 	UFUNCTION(NetMulticast, Unreliable)

@@ -19,6 +19,7 @@
 #include "GameFrameWork/GameStateBase.h"
 #include "MyCharacterActionComponent.h"
 #include "MyCharacterReplicatorComponent.h"
+#include "MySaveGame.h"
 
 #include "DrawDebugHelpers.h"
 
@@ -72,19 +73,38 @@ AMyCharacter::AMyCharacter()
 
 	//custom value
 	_effect = 1.5f;
+
 }
 
 //Called when the game starts or when spawned
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	InitializeInstance();
-
+	DisableInput(Cast<APlayerController>(GetController()));
 	if (HasAuthority())
 	{
 		SpawnDefaultWeapon();
 	}
+	
+	if (IsLocallyControlled())
+	{
+		//UGameplayStatics::DeleteGameInSlot(HOST_MIGRATION, 0);
+		_saveGame = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(HOST_MIGRATION, 0));
+		if (_saveGame)
+		{
+			if (HasAuthority())
+			{
+				_saveGame->ServerLoad(GetWorld());
+			}
+			else
+			{
+				_saveGame->ClientLoad(GetWorld());
+			}
+		}
+	}
 
+	EnableInput(Cast<APlayerController>(GetController()));
+	UE_LOG(LogTemp, Warning, TEXT("Character Okay"));
 }
 
 // Called every frame
@@ -113,7 +133,7 @@ void AMyCharacter::Tick(float DeltaTime)
 	{
 		_actionComponent->SimulateMove(move);
 	}
-
+	
 }
 
 //Called to bind functionality to input
@@ -142,12 +162,17 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 }
 
+
 void AMyCharacter::SpawnDefaultWeapon_Implementation()
 {
 	FActorSpawnParameters param;
 	param.Owner = this;
 	param.Instigator = this;
-	_equippedWeapon = GetWorld()->SpawnActor<AMyWeapon>(_defaultWeaponClass, param);
+
+	if (_defaultWeaponClass)
+	{
+		_equippedWeapon = GetWorld()->SpawnActor<AMyWeapon>(_defaultWeaponClass, param);
+	}
 	if (_equippedWeapon)
 	{
 		_equippedWeapon->SetWeaponState(EWeaponState::EWS_Equip);
@@ -166,6 +191,12 @@ void AMyCharacter::SetColor_Implementation(const FLinearColor& color)
 {
 	SetColor_Multi(color);
 }
+
+void AMyCharacter::SetColor_Client_Implementation(const FLinearColor& color)
+{
+	GetMesh()->CreateDynamicMaterialInstance(0)->SetVectorParameterValue(TEXT("Color"), color);
+}
+
 
 void AMyCharacter::SetColor_Multi_Implementation(const FLinearColor& color)
 {

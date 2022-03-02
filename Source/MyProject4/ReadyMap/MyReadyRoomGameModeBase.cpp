@@ -28,7 +28,7 @@ AMyReadyRoomGameModeBase::AMyReadyRoomGameModeBase()
 	
 
 	PlayerControllerClass = AReadyRoomPlayerController::StaticClass();
-	PlayerStateClass = AReadyRoomPlayerState::StaticClass();
+	PlayerStateClass = AMyPlayerState::StaticClass();
 	GameStateClass = AReadyRoomGameStateBase::StaticClass();
 	DefaultPawnClass = AMyCharacter::StaticClass();
 	
@@ -38,7 +38,6 @@ AMyReadyRoomGameModeBase::AMyReadyRoomGameModeBase()
 void AMyReadyRoomGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
-	_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
 
 }
 
@@ -49,27 +48,15 @@ void AMyReadyRoomGameModeBase::Tick(float DeltaTimer)
 	//_gameInstance->UpdateGameSession(_gameInstance->_currentSessionName);
 }
 
-
-
 void AMyReadyRoomGameModeBase::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
-	//if (_userNum <= _maxNum)
-	//{
-	if (GEngine->IsEditor())
-	{
-		Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
-		return;
-	}
-
-	if (_gameInstance->CheckOpenPublicConnection(true))
+	_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
+	if (!(_gameInstance->CheckOpenPublicConnection(true)))
 	{
 		return;
 	}
 	
-
-
 	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
-	//}
 }
 
 
@@ -91,14 +78,16 @@ APlayerController* AMyReadyRoomGameModeBase::Login(UPlayer* NewPlayer, ENetRole 
 
 void AMyReadyRoomGameModeBase::Logout(AController* Exiting)
 {
-
+	
 	if (!Exiting->GetNetOwningPlayer())
 	{
+		_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
 		_gameInstance->CheckOpenPublicConnection(false);
-		Super::Logout(Exiting);
-		return;
+		GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "exiting");
 	}
+	
 
 	Super::Logout(Exiting);
 }
+
 

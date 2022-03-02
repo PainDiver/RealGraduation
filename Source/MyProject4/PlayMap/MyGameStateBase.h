@@ -49,9 +49,12 @@ public:
 	UPROPERTY(replicated, BlueprintReadOnly)
 		float _StartTimer;
 
-
 	UPROPERTY(replicated, BlueprintReadOnly)
-		bool _gameStarted;
+		bool _bIsAllPlayersReady;
+
+	UPROPERTY(replicated, BlueprintReadWrite)
+		bool _bGameStarted;
+
 
 
 	UPROPERTY(replicated, BlueprintReadOnly)

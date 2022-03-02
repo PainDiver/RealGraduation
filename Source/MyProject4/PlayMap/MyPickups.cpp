@@ -10,12 +10,16 @@
 #include "MyPlayerState.h"
 #include "Net/UnrealNetWork.h"
 #include "../Common/MyCharacterActionComponent.h"
+#include "Components/SphereComponent.h"
+#include "../PlayMap/MyPickups.h"
 
 // Sets default values
 AMyPickups::AMyPickups()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.	
 	_effect = 1.5f;
+	
+	_ePickUpType = _ePickUpType = static_cast<EPickUpType>(FMath::RandRange(0, static_cast<int32>(EPickUpType::EPT_MAX) - 2));
 
 }
 
@@ -32,7 +36,6 @@ void AMyPickups::BeginPlay()
 void AMyPickups::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Super::OnOverlapBegin(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
-
 	_character = Cast<AMyCharacter>(OtherActor);
 	if (_character)
 	{
@@ -51,10 +54,22 @@ void AMyPickups::RPCAdd_Implementation(AMyCharacter* character)
 	{
 		SetActorEnableCollision(false);
 		_mesh->SetVisibility(false);
-		SetOwner(_character);
-		_playerState->_Inventory.Add(this);
-	}
 
+		auto item = GetWorld()->SpawnActor<AMyPickups>();
+		item->OnActorBeginOverlap.Clear();
+		item->SetOwner(_character);
+		item->_ePickUpType = _ePickUpType;
+		
+		_playerState->_Inventory.Add(item);
+		FTimerHandle delay;
+		GetWorldTimerManager().SetTimer(delay, FTimerDelegate::CreateLambda([&]()
+			{
+				_ePickUpType = static_cast<EPickUpType>(FMath::RandRange(0, static_cast<int32>(EPickUpType::EPT_MAX) - 2));
+				SetActorEnableCollision(true);
+				_mesh->SetVisibility(true);
+			}
+		), 10, false);
+	}
 }
 
 
@@ -96,5 +111,6 @@ void AMyPickups::RestoreSelf_Implementation()
 		break;
 	}
 	GetWorldTimerManager().ClearTimer(_timerHandle);
+	
 	Destroy();
 }

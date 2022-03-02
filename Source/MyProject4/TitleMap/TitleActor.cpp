@@ -20,7 +20,6 @@ void ATitleActor::BeginPlay()
 {
 	Super::BeginPlay();
 	GetWorldTimerManager().SetTimer(_timerHandle, this, &ATitleActor::JumpOnTime, time, true, 2.f);
-	
 }
 
 void ATitleActor::Tick(float DeltaTime)

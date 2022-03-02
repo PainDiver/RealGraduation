@@ -11,17 +11,6 @@
  *
  */
 
-USTRUCT()
-struct FMigrationPacket
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY()
-	bool _IsHost = false;
-
-	UPROPERTY()
-	bool _IsStarted = false;
-};
 
 
 UCLASS()
@@ -52,43 +41,49 @@ public:
 	UPROPERTY(replicatedUsing = OnRep_InitializeColorAndNotifyConnection)
 	FCharacterInfo _characterInfo;
 
-
 	UPROPERTY(replicated)
 		bool _Initialized;
+
 
 	UPROPERTY(replicated)
 		bool _allMightyMode;
 
 
 	UFUNCTION(Server, Reliable)
-		void SetCharacterInfo_Server(FCharacterInfo info);
+		void SetCharacterInfo_Server(const FCharacterInfo& info);
 
-	UFUNCTION(Server,Reliable)
+	UFUNCTION(Server,Reliable,BlueprintCallable)
 	void OnRep_InitializeColorAndNotifyConnection();
+
+	UFUNCTION(NetMulticast, Reliable)
+		void OnRep_InitializeColorAndNotifyConnection_Multi();
+
 
 	UFUNCTION(Server, Reliable)
 		void NotifyConnection();
 
+	//UFUNCTION(Client, Reliable)
+	//void BuildSessionForMigration();
+
+	//UFUNCTION(Client, Reliable)
+	//void ClientMigration();
 
 	UFUNCTION(Client, Reliable)
-	void BuildSessionForMigration();
-
-	UFUNCTION(Client, Reliable)
-	void ClientMigration();
-
-	UFUNCTION(Client, UnReliable)
 	void OnRep_ServerMigration();
 
-	void SetMigrationInfo(FMigrationPacket info) { _migrationInfo=info; }
+	UFUNCTION(Server,Reliable)
+	void SetMigrationInfo(const FMigrationPacket& info);
 
 	inline FMigrationPacket GetMigrationInfo() { return _migrationInfo; }
 
-	
+	UFUNCTION(NetMulticast,Reliable)
+	void SaveBeforeExit();
 
 private:
+	UPROPERTY()
+	class UMySaveGame* _saveGameInstance;
 
 	UPROPERTY(replicatedUsing = OnRep_ServerMigration)
-		FMigrationPacket _migrationInfo;
-
+	FMigrationPacket _migrationInfo;
 
 };

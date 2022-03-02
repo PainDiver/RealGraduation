@@ -9,6 +9,7 @@
 #include "Engine/World.h"
 #include "../Common/MyCharacter.h"
 #include "../ReadyMap/ReadyRoomGameStateBase.h"
+#include "../Common/MySaveGame.h"
 
 AMyPlayerState::AMyPlayerState()
 {
@@ -23,75 +24,48 @@ void AMyPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
 
+	auto controller = GetOwner<AController>();
 
-
-
-	if (HasNetOwner())
+	if (controller && controller->IsLocalPlayerController())
 	{
 		UMyGameInstance* localInstance = Cast<UMyGameInstance>(GetGameInstance());
-		DisableInput(GetOwner<APlayerController>());
-		if (localInstance->_characterInfo.initialized)
-		{
-			SetCharacterInfo_Server(localInstance->_characterInfo);
-			if (IsNetMode(ENetMode::NM_ListenServer))
-			{
-				OnRep_InitializeColorAndNotifyConnection();
-			}
-		}
-	
-		UGameViewportClient* viewPortClient = localInstance->GetGameViewportClient();
-		if (viewPortClient)
-		{
-			if(viewPortClient->OnWindowCloseRequested().IsBound())
-			{
-				viewPortClient->OnWindowCloseRequested().Unbind();
-			}
-			viewPortClient->OnWindowCloseRequested().BindLambda([&]()->bool
-				{
-					UMyGameInstance* localInstance = Cast<UMyGameInstance>(GetGameInstance());
-					AReadyRoomGameStateBase* gameState = Cast<AReadyRoomGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
-					if (gameState)
-					{
-						gameState->FindAllPlayerControllerHideAllWidget();
-					}
-					if (localInstance)
-					{
-						localInstance->_exitRequest = true;
-						localInstance->DestroySession();
-					}
-					return false;
-				});
-		}
+		SetCharacterInfo_Server(localInstance->_characterInfo);
+		auto character = Cast<AMyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		character->SetColor(localInstance->_characterInfo._characterColor);
+		localInstance->BindAltF4(true);
+		NotifyConnection();
 	}
+	UE_LOG(LogTemp, Warning, TEXT("state Okay"));
 }
 
-void AMyPlayerState::SetCharacterInfo_Server_Implementation(FCharacterInfo info)
+void AMyPlayerState::SetCharacterInfo_Server_Implementation(const FCharacterInfo& info)
 {
 	_characterInfo = info;
+	_characterInfo.OnRepToggle = !_characterInfo.OnRepToggle;
 	_Initialized = true;
 }
 
 void AMyPlayerState::OnRep_InitializeColorAndNotifyConnection_Implementation()
-{	
-	TArray<AActor*> actors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMyCharacter::StaticClass(), actors);
-	
-	for (const auto& player : actors)
+{		
+	if (GetWorld()->IsServer())
 	{
-		AMyCharacter* character = Cast<AMyCharacter>(player);
-		character->SetColor(Cast<AMyPlayerState>(character->GetPlayerState())->_characterInfo._characterColor);
-		GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, character->GetName());
+		OnRep_InitializeColorAndNotifyConnection_Multi();
 	}
-	
-
-	NotifyConnection();
 }
+
+void AMyPlayerState::OnRep_InitializeColorAndNotifyConnection_Multi_Implementation()
+{
+	auto character = Cast<AMyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	auto ps = Cast<AMyPlayerState>(character->GetPlayerState());
+	//character->SetColor(FColor::Blue);
+	character->SetColor(ps->_characterInfo._characterColor);
+}
+
 
 
 void AMyPlayerState::NotifyConnection_Implementation()
 {
 	
-
 	UWorld* world = GetWorld();
 
 	if (!world)
@@ -104,42 +78,49 @@ void AMyPlayerState::NotifyConnection_Implementation()
 	{
 		gsb->AddConnectedPlayerInfo(_characterInfo);
 	}
-}
-
-void AMyPlayerState::BuildSessionForMigration_Implementation()
-{
-	UMyGameInstance* gameInstance = Cast<UMyGameInstance>(GetGameInstance());
 	
-	gameInstance->GetCurrentSessionInterface()->OnDestroySessionCompleteDelegates.AddUObject(gameInstance, &UMyGameInstance::OnDestroySessionServerMigration);
-	gameInstance->GetCurrentSessionInterface()->DestroySession(gameInstance->_currentSessionName);
-
 }
 
-
-
-void AMyPlayerState::ClientMigration_Implementation()
-{
-	UMyGameInstance* gameInstance = Cast<UMyGameInstance>(GetGameInstance());
-
-	gameInstance->GetCurrentSessionInterface()->OnDestroySessionCompleteDelegates.AddUObject(gameInstance, &UMyGameInstance::OnDestroySessionClientMigration);
-	gameInstance->GetCurrentSessionInterface()->DestroySession(gameInstance->_currentSessionName);
-
-}
 
 void AMyPlayerState::OnRep_ServerMigration_Implementation()
 {
-	if (_migrationInfo._IsHost)
+	if (GetOwner<APlayerController>() == UGameplayStatics::GetPlayerController(GetWorld(), 0))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("asd"));
-		BuildSessionForMigration();
+		Cast<UMyGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))->SetMigartionInfo(GetMigrationInfo());
+		SaveBeforeExit();
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("oo"));
-		ClientMigration();
+		auto state = Cast<AMyGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
+		Cast<UMyGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))->SetMigartionInfo({ false,GetPlayerName(),GetWorld()->GetMapName(),state->_bGameStarted});
+		SaveBeforeExit();
 	}
 }
 
+void AMyPlayerState::SetMigrationInfo_Implementation(const FMigrationPacket& info)
+{	
+	GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, GetName());
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *GetName());
+	GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, FString::FromInt(static_cast<int>(GetLocalRole()))+" role");
+	UE_LOG(LogTemp, Warning, TEXT("%d role"), static_cast<int>(GetLocalRole()));
+
+	_migrationInfo = info;
+}
+
+void AMyPlayerState::SaveBeforeExit_Implementation()
+{
+	if (GetWorld()->IsServer())
+	{
+		return;
+	}
+
+	_saveGameInstance = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(HOST_MIGRATION, 0));
+	if (!_saveGameInstance)
+	{
+		_saveGameInstance = Cast<UMySaveGame>(UGameplayStatics::CreateSaveGameObject(UMySaveGame::StaticClass()));
+	}
+	_saveGameInstance->Save(GetWorld());
+}
 
 void AMyPlayerState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
@@ -151,7 +132,7 @@ void AMyPlayerState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Out
 	DOREPLIFETIME(AMyPlayerState, _Initialized);
 	DOREPLIFETIME(AMyPlayerState, _allMightyMode);
 	DOREPLIFETIME(AMyPlayerState, _characterInfo);
-	
+	DOREPLIFETIME(AMyPlayerState, _migrationInfo);
 
 }
 

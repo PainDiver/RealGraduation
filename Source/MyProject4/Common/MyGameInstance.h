@@ -10,7 +10,26 @@
 #include "MyGameInstance.generated.h"
 
 
-DECLARE_DELEGATE(FDisconnectDelegate)
+
+
+USTRUCT(Atomic, BlueprintType)
+struct FMigrationPacket
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	bool _IsHost = false;
+
+	UPROPERTY()
+	FString _hostName = "NewHost";
+
+	UPROPERTY()
+	FString _currentMap = "/Game/map/ReadyMap";
+
+	UPROPERTY()
+	bool _IsStarted = false;
+
+};
 
 /**
  * 
@@ -33,6 +52,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool initialized = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool OnRepToggle = false;
 };
 
 
@@ -97,7 +119,7 @@ public:
 
 	//In Game Values
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
-	bool _gameStarted;
+	bool _gameEnterClosed;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
@@ -116,12 +138,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
 		int _numOfPlayerInCurrentSession;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
+		FMigrationPacket _migration;
 
 	FName _currentSessionName;
 
-
 	int _selectedIndex;
-
 
 	FString _currentSessionAddress;
 
@@ -129,12 +151,10 @@ public:
 
 	TSharedPtr<class FOnlineSessionSearch> _sessionSearch;
 
-	static FName SESSION_NAME;
+	const static FName SESSION_NAME;
 
-	static uint8 MAX_PLAYER;
+	const static uint8 MAX_PLAYER;
 
-
-	FDisconnectDelegate _disconnectDelegate;
 
 
 	UFUNCTION(BlueprintCallable, Category = "Session")
@@ -162,19 +182,39 @@ public:
 	UFUNCTION(Server,Reliable,BlueprintCallable, Category = "Transition")
 		void MyServerTravel(const FString& mapName, const FString& additionalOption, bool bAbsolute);
 
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+		void FindLowestPingAndNotify();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(Client,Reliable,BlueprintCallable)
 		void DestroySession();
 
+	UFUNCTION(BlueprintCallable)
 	bool CheckOpenPublicConnection(bool isIn);
 
 	
+	FString GetMyIpAddress();
+
+	void SetMigartionInfo(FMigrationPacket info) { _migration = info; }
+
+	inline FMigrationPacket GetMigrationInfo() { return _migration; }
+
 	inline IOnlineSessionPtr GetCurrentSessionInterface() { return _sessionInterface; }
+
+	void BindAltF4(bool on);
+
+	bool _exitRequest =false;
+
+
+
+private:
+	//callback for server hosting, joining, destroying
+
 
 	void OnCreateSessionComplete(FName sessionName, bool success);
 
 	void OnDestroySessionComplete(FName sessionName, bool success);
 
+	void OnMigrationCreateSessionComplete(FName sessionName, bool success);
 
 	void OnFindSessionComplete(bool success);
 
@@ -188,15 +228,9 @@ public:
 
 	void OnFindSessionMigration(bool success);
 
-	bool _exitRequest =false;
 
-private:
-	//callback for server hosting, joining, destroying
-	
 	IOnlineSessionPtr _sessionInterface;
 
-	
-
-	
+	FString _saveSlot;
 
 };

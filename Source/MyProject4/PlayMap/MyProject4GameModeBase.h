@@ -54,8 +54,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	inline uint8 GetNumOfFinished() { return _NumOfFinished; }
 
-	UFUNCTION(BlueprintCallable)
-	inline bool IsGameStarted() { return _gameStarted; }
 
 
 
@@ -80,8 +78,6 @@ private:
 	class AMyEnemy* _enemy;
 
 	class AMyGameStateBase* _gameState;
-
-	bool _gameStarted;
 
 	bool _bIsFinal;
 

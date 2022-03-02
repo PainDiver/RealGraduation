@@ -36,19 +36,6 @@ void AMyGameStateBase::NotifyFin_Implementation()
 	{
 		AMyWorldTimer* pc = Cast<AMyWorldTimer>(playerController);
 		pc->GetWorldTimerManager().ClearAllTimersForObject(pc);
-		if (pc->_inventoryHUDOverlay)
-		{
-			pc->_inventoryHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
-		}
-		if (pc->_FinalTimerHUDOverlay)
-		{
-			pc->_FinalTimerHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
-		}
-		if (pc->_SpectateHUDOverlay)
-		{
-			pc->_SpectateHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
-		}
-		
 	}
 	for (auto actor : trivialActors)
 	{
@@ -67,18 +54,6 @@ void AMyGameStateBase::NotifyFin_Client_Implementation()
 		if (pc)
 		{
 			pc->GetWorldTimerManager().ClearAllTimersForObject(pc);
-			if (pc->_inventoryHUDOverlay)
-			{
-				pc->_inventoryHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
-			}
-			if (pc->_FinalTimerHUDOverlay)
-			{
-				pc->_FinalTimerHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
-			}
-			if (pc->_SpectateHUDOverlay)
-			{
-				pc->_SpectateHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
-			}
 		}
 	}
 }
@@ -114,6 +89,7 @@ void AMyGameStateBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 
 	DOREPLIFETIME(AMyGameStateBase, _finalTimer);
 	DOREPLIFETIME(AMyGameStateBase, _StartTimer);
-	DOREPLIFETIME(AMyGameStateBase, _gameStarted);
+	DOREPLIFETIME(AMyGameStateBase, _bIsAllPlayersReady);
+	DOREPLIFETIME(AMyGameStateBase, _bGameStarted);
 	DOREPLIFETIME(AMyGameStateBase, _connectedPlayersInfo);
 }

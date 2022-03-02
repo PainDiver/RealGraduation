@@ -23,13 +23,6 @@ void ATitleController::BeginPlay()
 
 void ATitleController::PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel)
 {
-	TArray<UUserWidget*> widgets;
-	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), widgets, UUserWidget::StaticClass());
-
-	for (auto widget : widgets)
-	{
-		widget->RemoveFromParent();
-	}
 
 	Super::PreClientTravel(PendingURL, TravelType, bIsSeamlessTravel);
 }

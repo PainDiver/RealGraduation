@@ -73,6 +73,10 @@ public:
 	UFUNCTION(Server,Reliable,BlueprintCallable)
 		void SetColor(const FLinearColor& color);
 
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+		void SetColor_Client(const FLinearColor& color);
+
+
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 		void SetColor_Multi(const FLinearColor& color);
 
@@ -96,6 +100,8 @@ public:
 	UPROPERTY()
 		UCharacterMovementComponent* _characterMovementComponent;
 
+	UPROPERTY()
+		class UMySaveGame* _saveGame;
 
 private:
 
@@ -137,5 +143,4 @@ private:
 	AActor* _target;
 
 	//Components
-
 };

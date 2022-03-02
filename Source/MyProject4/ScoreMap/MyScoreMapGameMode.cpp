@@ -27,12 +27,20 @@ AMyScoreMapGameMode::AMyScoreMapGameMode()
 void AMyScoreMapGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+	Cast<UMyGameInstance>(GetGameInstance())->_gameEnterClosed = false;
+
 }
 
 
 
 void AMyScoreMapGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
+	_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
+	if (!(_gameInstance->CheckOpenPublicConnection(true)))
+	{
+		return;
+	}
+
 	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
 	
 }
@@ -42,4 +50,16 @@ APlayerController* AMyScoreMapGameMode::Login(UPlayer* NewPlayer, ENetRole InRem
 {
 	return Super::Login(NewPlayer, InRemoteRole, Options, Portal, UniqueId, ErrorMessage);
 	
+}
+
+void AMyScoreMapGameMode::Logout(AController* Exiting)
+{
+	if (!Exiting->GetNetOwningPlayer())
+	{
+		_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
+		_gameInstance->CheckOpenPublicConnection(false);
+		GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "exiting");
+	}
+
+	return Super::Logout(Exiting);
 }

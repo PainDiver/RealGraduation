@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFrameWork/GameStateBase.h"
+#include "GameFrameWork/Character.h"
 
 // Sets default values
 AMyPlatForm::AMyPlatForm()
@@ -39,20 +40,26 @@ void AMyPlatForm::BeginPlay()
 	_dynamicMatInstance->GetMaterial()->GetVectorParameterValue(TEXT("Color"), _platFormColor);
 
 	GetWorldTimerManager().SetTimer(_timerHandle, this, &AMyPlatForm::TurnOnToggle, 5.f, true, 5.0f);
-	
+	auto character =Cast<AActor>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (character)
+	{
+		SetOwner(character);
+	}
 }
 
 // Called every frame
 void AMyPlatForm::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (HasAuthority())
-	{
-		Transform(DeltaTime);
-	}
+	Transform(DeltaTime);
 }
 
 void AMyPlatForm::Transform_Implementation(float DeltaTime)
+{
+	Transform_Multi(DeltaTime);
+}
+
+void AMyPlatForm::Transform_Multi_Implementation(float DeltaTime)
 {
 	switch (_platformType)
 	{
@@ -103,6 +110,7 @@ void AMyPlatForm::Transform_Implementation(float DeltaTime)
 		break;
 	}
 }
+
 
 void AMyPlatForm::SetTransparency_Implementation()
 {

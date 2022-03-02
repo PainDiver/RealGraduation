@@ -31,9 +31,6 @@ public:
 
 	virtual void Logout(AController* Exiting);
 
-	
-
-
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Room Capacity")
 	//uint8 _maxNum;
 
@@ -41,7 +38,6 @@ public:
 
 
 	class AReadyRoomGameStateBase* _gameState;
-
 
 	class UMyGameInstance* _gameInstance;
 

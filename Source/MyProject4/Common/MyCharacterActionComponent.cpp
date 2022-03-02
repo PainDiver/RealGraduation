@@ -111,6 +111,7 @@ void UMyCharacterActionComponent::UseItem_Implementation()
 
 	AMyPickups* item = playerState->_Inventory.Pop();
 
+
 	if (item)
 	{
 		item->Activate();

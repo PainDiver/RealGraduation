@@ -32,8 +32,10 @@ AMyWeapon::AMyWeapon()
 void AMyWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-	_combatCollision->OnComponentBeginOverlap.AddDynamic(this, &AMyWeapon::CombatOnOverlapBegin);
-
+	if (_combatCollision)
+	{
+		_combatCollision->OnComponentBeginOverlap.AddDynamic(this, &AMyWeapon::CombatOnOverlapBegin);
+	}
 }
 
 // Called every frame

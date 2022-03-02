@@ -57,13 +57,22 @@ void AMyProject4GameModeBase::BeginPlay()
 			{
 				return;
 			}
-			if (instance->_numOfPlayerInCurrentSession == gameState->_connectedPlayersInfo.Num() || _abandonUnconnectedPlayersWithIn <= 0)
+
+			if (gameState->_bGameStarted) // in case of host migration
+			{
+				PrimaryActorTick.bCanEverTick = true;
+				gameState->_bIsAllPlayersReady = true;
+				gameState->_connectedPlayersInfo.Empty();
+				GetWorldTimerManager().ClearTimer(_delayTimer);
+				GetWorldTimerManager().ClearTimer(_timerForCheckConnection);
+			}
+			else if(instance->_numOfPlayerInCurrentSession == gameState->_connectedPlayersInfo.Num() || _abandonUnconnectedPlayersWithIn <= 0 )
 			{
 				GetWorld()->GetTimerManager().SetTimer(_delayTimer, FTimerDelegate::CreateLambda([&]()
 					{
 						PrimaryActorTick.bCanEverTick = true;
 						AMyGameStateBase* gameState = GetGameState<AMyGameStateBase>();
-						gameState->_gameStarted = true;
+						gameState->_bIsAllPlayersReady = true;
 						gameState->_connectedPlayersInfo.Empty();
 					}), 12.f, false);
 				GetWorldTimerManager().ClearTimer(_timerForCheckConnection);
@@ -75,7 +84,7 @@ void AMyProject4GameModeBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (_gameState->_gameStarted)
+	if (_gameState->_bIsAllPlayersReady)
 	{
 		CountEnemyTimer(DeltaTime);
 		CountFinalTimer(DeltaTime);
@@ -86,6 +95,10 @@ void AMyProject4GameModeBase::Tick(float DeltaTime)
 
 void AMyProject4GameModeBase::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
+	if (Cast<UMyGameInstance>(GetGameInstance())->_gameEnterClosed)
+	{
+		return;
+	}
 	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);	
 }
 
@@ -97,6 +110,7 @@ APlayerController* AMyProject4GameModeBase::Login(UPlayer* NewPlayer, ENetRole I
 
 void AMyProject4GameModeBase::Logout(AController* Exiting)
 {
+	
 	Super::Logout(Exiting);
 }
 
@@ -106,7 +120,7 @@ void AMyProject4GameModeBase::CountEnemyTimer(const float& DeltaTime)
 	if (_bBoss)
 	{
 		_bossTimer -= DeltaTime;
-		if (_bossTimer < 0)
+		if (_bossTimer <= 0)
 		{
 			_bossTimer = 0;
 			SpawnBoss();
@@ -123,7 +137,7 @@ void AMyProject4GameModeBase::CountStartTimer(const float& DeltaTime)
 		if (_gameState)
 		{
 			_gameState->_StartTimer = _StartTimer;
-			if (_StartTimer < 0)
+			if (_StartTimer <= 0)
 			{
 				_gameState->LetPlayerMove();
 				_bIsStarted = true;
@@ -139,7 +153,7 @@ void AMyProject4GameModeBase::CountFinalTimer(const float& DeltaTime)
 	{
 		_finalTimer -= DeltaTime;
 		_gameState->_finalTimer = _finalTimer;
-		if (_finalTimer < 0)
+		if (_finalTimer<= 0)
 		{
 			_finalTimer = 0;
 			_bPaused = true;

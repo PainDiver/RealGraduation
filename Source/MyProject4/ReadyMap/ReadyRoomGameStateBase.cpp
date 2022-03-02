@@ -27,6 +27,7 @@ void AReadyRoomGameStateBase::BeginPlay()
 void AReadyRoomGameStateBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	if (PlayerArray.Num() >= MIN_PLAYER)
 	{
 		if (_bIsStartable == false)
@@ -37,9 +38,6 @@ void AReadyRoomGameStateBase::Tick(float DeltaTime)
 		if (_bIsStartable == true)
 			_bIsStartable = false;
 	}
-
-
-
 }
 
 
