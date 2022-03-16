@@ -27,12 +27,10 @@ protected:
 
 public:
 	
-	UFUNCTION(Server,Reliable)
+	UFUNCTION(Server,Reliable,BlueprintCallable)
 	void NotifyFin();
 
-	UFUNCTION(Client, Reliable)
-	void NotifyFin_Client();
-
+	
 	UFUNCTION(Server, Reliable)
 		void LetPlayerMove();
 
@@ -55,7 +53,8 @@ public:
 	UPROPERTY(replicated, BlueprintReadWrite)
 		bool _bGameStarted;
 
-
+	UPROPERTY(replicated, BlueprintReadWrite)
+		bool _bGameEnded;
 
 	UPROPERTY(replicated, BlueprintReadOnly)
 		TArray<FCharacterInfo> _connectedPlayersInfo;

@@ -20,6 +20,7 @@
 #include "MyCharacterActionComponent.h"
 #include "MyCharacterReplicatorComponent.h"
 #include "MySaveGame.h"
+#include "UMG.h"
 
 #include "DrawDebugHelpers.h"
 
@@ -80,7 +81,11 @@ AMyCharacter::AMyCharacter()
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	DisableInput(Cast<APlayerController>(GetController()));
+	auto controller = Cast<APlayerController>(GetController());
+	if (controller)
+	{
+		DisableInput(controller);
+	}
 	if (HasAuthority())
 	{
 		SpawnDefaultWeapon();
@@ -101,9 +106,11 @@ void AMyCharacter::BeginPlay()
 				_saveGame->ClientLoad(GetWorld());
 			}
 		}
+		UGameplayStatics::DeleteGameInSlot(HOST_MIGRATION, 0);
 	}
+	EnableInput(controller);
 
-	EnableInput(Cast<APlayerController>(GetController()));
+	GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue,"initialized character");
 	UE_LOG(LogTemp, Warning, TEXT("Character Okay"));
 }
 
@@ -112,7 +119,10 @@ void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
+	if (!IsPawnControlled())
+	{
+		return;
+	}
 	if (!_actionComponent || !_replicatorComponent)
 	{
 		return;
@@ -128,7 +138,6 @@ void AMyCharacter::Tick(float DeltaTime)
 	{
 		_replicatorComponent->RespawnCheck();
 	}
-
 	if (IsLocallyControlled())
 	{
 		_actionComponent->SimulateMove(move);
@@ -288,6 +297,56 @@ void AMyCharacter::ShowCursor()
 }
 
 
+void AMyCharacter::FlyUp_AllMighty_Server_Implementation(float value)
+{
+	
+	FlyUp_AllMighty_Multi(value);
+}
 
 
+void AMyCharacter::FlyUp_AllMighty_Multi_Implementation(float value)
+{
+	FVector currentLoc = GetActorLocation();
+	FVector newLoc = currentLoc + 25 * GetActorUpVector() * value;
+	SetActorLocation(newLoc);
+}
 
+void AMyCharacter::MoveForward_AllMighty_Server_Implementation(float value)
+{
+	MoveForward_AllMighty_Multi(value);
+}
+
+void AMyCharacter::MoveForward_AllMighty_Multi_Implementation(float value)
+{
+	FVector currentLoc = GetActorLocation();
+	FRotator currentRot = GetControlRotation();
+	FRotationMatrix rotmat = FRotationMatrix(currentRot);
+	FVector dir = rotmat.GetUnitAxis(EAxis::X);
+	FVector newLoc = currentLoc + 25 * value * dir;
+	SetActorLocation(newLoc);
+}
+
+
+void AMyCharacter::MoveRight_AllMighty_Server_Implementation(float value)
+{
+	MoveRight_AllMighty_Multi(value);
+}
+
+void AMyCharacter::MoveRight_AllMighty_Multi_Implementation(float value)
+{
+	FVector currentLoc = GetActorLocation();
+	FVector newLoc = currentLoc + 25 * GetActorRightVector() * value;
+	SetActorLocation(newLoc);
+}
+
+
+void AMyCharacter::AllMightyModeBinding()
+{
+	InputComponent->AxisBindings.Empty();
+
+	InputComponent->BindAxis("Turn", this, &AMyCharacter::Turn);
+	InputComponent->BindAxis("LookUp", this, &AMyCharacter::LookUp);
+	InputComponent->BindAxis("FlyUp", this, &AMyCharacter::FlyUp_AllMighty_Server);
+	InputComponent->BindAxis("MoveForward", this, &AMyCharacter::MoveForward_AllMighty_Server);
+	InputComponent->BindAxis("MoveRight", this, &AMyCharacter::MoveRight_AllMighty_Server);
+}

@@ -11,6 +11,25 @@
 
 
 
+UENUM(BlueprintType)
+enum class EMapSelection : uint8
+{
+	EMS_Waikiki				UMETA(DisplayName = "Waikiki"),
+	EMS_SpaceStation		UMETA(DisplayName = "SpaceStation"),
+	EMS_MAX					UMETA(DisplayName = "DefaultMax")
+};
+
+
+USTRUCT(Atomic, BlueprintType)
+struct FChildProcesses
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+	FProcHandle _childProcess;
+	int _portNumber;
+};
+
 
 USTRUCT(Atomic, BlueprintType)
 struct FMigrationPacket
@@ -115,6 +134,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 		TSubclassOf<class UUserWidget> _UIHUDAsset;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _crossHairHUDAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _connectionUIHUDAsset;
+
 
 
 	//In Game Values
@@ -140,6 +165,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Session")
 		FMigrationPacket _migration;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Map")
+	EMapSelection _mapSelection;
+
 
 	FName _currentSessionName;
 
@@ -205,6 +235,10 @@ public:
 	bool _exitRequest =false;
 
 
+	UFUNCTION(BlueprintCallable)
+	int CreateNewProcess(FString url, FString Attributes);
+	
+	TArray<FChildProcesses> _childProcesses;
 
 private:
 	//callback for server hosting, joining, destroying

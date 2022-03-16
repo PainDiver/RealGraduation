@@ -30,6 +30,8 @@ public:
 	virtual void PreClientTravel(const FString& PendingURL,ETravelType TravelType,bool bIsSeamlessTravel) override;
 	
 
+	
+
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Chatting")
 	void commit(const FString& message);
 	virtual void commit_Implementation(const FString& message);
@@ -52,6 +54,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 	UUserWidget* _StartHUDOverlay;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<class UUserWidget> _MapSelectionHUDAsset;
 
 	bool _bChattable;
 
@@ -81,4 +86,16 @@ private:
 	class UScrollBox* _scrollbox;
 	
 	FString _messageSent;
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
 };

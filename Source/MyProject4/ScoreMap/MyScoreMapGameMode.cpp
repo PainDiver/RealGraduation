@@ -9,7 +9,7 @@
 #include "Net/UnrealNetWork.h"
 #include "../Common/MyGameInstance.h"
 #include "MyScoreMapPlayerController.h"
-
+#include "Engine/GameInstance.h"
 
 
 AMyScoreMapGameMode::AMyScoreMapGameMode()
@@ -27,8 +27,21 @@ AMyScoreMapGameMode::AMyScoreMapGameMode()
 void AMyScoreMapGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	Cast<UMyGameInstance>(GetGameInstance())->_gameEnterClosed = false;
+	auto instance = Cast<UMyGameInstance>(GetGameInstance());
+	if (instance)
+	{
+		instance->_gameEnterClosed = false;
+	}
 
+	//auto viewPortClient = instance->GetGameViewportClient();
+	//if (viewPortClient)
+	//{
+	//		if (viewPortClient->OnWindowCloseRequested().IsBound())
+	//		{
+	//			viewPortClient->OnWindowCloseRequested().Unbind();
+	//		}
+	//		viewPortClient->OnWindowCloseRequested().BindLambda([&]()->bool{return false;});
+	//}
 }
 
 

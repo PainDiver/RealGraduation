@@ -11,8 +11,6 @@
 #include "../PlayMap/MyPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
-const static uint8 MIN_PLAYER = 2;
-
 AReadyRoomGameStateBase::AReadyRoomGameStateBase()
 {
 	PrimaryActorTick.bCanEverTick=true;
@@ -27,17 +25,6 @@ void AReadyRoomGameStateBase::BeginPlay()
 void AReadyRoomGameStateBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (PlayerArray.Num() >= MIN_PLAYER)
-	{
-		if (_bIsStartable == false)
-			_bIsStartable = true;
-	}
-	else
-	{
-		if (_bIsStartable == true)
-			_bIsStartable = false;
-	}
 }
 
 

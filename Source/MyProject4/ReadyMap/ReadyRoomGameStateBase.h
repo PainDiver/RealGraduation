@@ -47,6 +47,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	inline bool GetIsStartable() const{ return _bIsStartable; }
 
+	UFUNCTION(BlueprintCallable)
+		void SetIsStartable(bool value) { _bIsStartable = value; }
 
 private:
 

@@ -20,6 +20,7 @@
 #include "MyPickUps.h"
 #include "Animation/SkeletalMeshActor.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "../ReadyMap/ReadyRoomPlayerController.h"
 
 
 // Sets default values
@@ -67,6 +68,8 @@ void AMyWorldTimer::PreClientTravel(const FString& PendingURL, ETravelType Trave
 }
 
 
+
+
 void AMyWorldTimer::NotifyArrival_Implementation()
 {
 	EnsureFirstCall();
@@ -102,11 +105,10 @@ void AMyWorldTimer::NotifyArrival_Implementation()
 	else
 	{
 		ChangeBindAction_Spectate();
-		SpectateMode();
+		SpectateMode(true);
 	}
 
 	_gameMode->IncreaseNumOfFinished();
-
 
 }
 
@@ -157,7 +159,7 @@ void AMyWorldTimer::UpdateHUD_Implementation()
 	TArray<AMyPickups*> inventory = GetPlayerState<AMyPlayerState>()->_Inventory;
 
 
-	if (inventory.Num() >= 3 || _sockImages.Num() < 2)
+	if (inventory.Num() >= 3)
 		return;
 
 
@@ -234,7 +236,28 @@ void AMyWorldTimer::InitializeHUD()
 				_UIHUDOverlay->AddToViewport();
 			}
 		}
+
+		if (_gameInstance->_crossHairHUDAsset)
+		{
+			auto crossHair = CreateWidget<UUserWidget>(this, _gameInstance->_crossHairHUDAsset);
+			if (crossHair)
+			{
+				crossHair->SetVisibility(ESlateVisibility::Visible);
+				crossHair->AddToViewport();
+			}
+		}
 		
+		if (_gameInstance->_connectionUIHUDAsset)
+		{
+			auto connection = CreateWidget<UUserWidget>(this, _gameInstance->_connectionUIHUDAsset);
+			if (connection)
+			{
+				connection->SetVisibility(ESlateVisibility::Visible);
+				connection->AddToViewport();
+			}
+		}
+
+
 		GetWorldTimerManager().SetTimer(UpdateHandle, this, &AMyWorldTimer::UpdateHUD, 0.2, true, 0.2);
 		SetInputMode(FInputModeUIOnly());
 	}
@@ -270,26 +293,41 @@ void AMyWorldTimer::SaveWinnerInfo()
 
 void AMyWorldTimer::AllMightyMode_Implementation()
 {
-	GetCharacter()->GetCapsuleComponent()->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
-	GetCharacter()->GetCharacterMovement()->GravityScale = 0.0f;
+	if (!_character)
+	{
+		_character = Cast<AMyCharacter>(GetCharacter());
+		if (!_character)
+			return;
+	}
+	_character->GetCapsuleComponent()->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
+	_character->GetCharacterMovement()->GravityScale = 0.0f;
+	_character->GetCharacterMovement()->DisableMovement();
+
+
+	GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "AllMighty!");
 	ChangeBindAction_AllMighty();
 }
 
-void AMyWorldTimer::SpectateMode()
+void AMyWorldTimer::SpectateMode(bool value)
 {
-	_playerState->SetIsSpectator(true);
-	_playerState->_IsSpectating = true;
-	SetActorHiddenInGame(true);
-
-	GetWorldTimerManager().SetTimer(DelayHandle, FTimerDelegate::CreateLambda([&]()
+	_playerState->SetIsSpectator(value);
+	_playerState->_IsSpectating = value;
+	
+	if (value)
+	{
+		ChangeState(NAME_Spectating);
+		ClientGotoState(NAME_Spectating);
+	}
+	else
+	{
+		if (_character)
 		{
-			GetCharacter()->GetCharacterMovement()->Deactivate();
-			GetCharacter()->SetActorTickEnabled(false);
-			ChangeState(NAME_Spectating);
-			ClientGotoState(NAME_Spectating);
-			GetWorldTimerManager().ClearTimer(DelayHandle);
-
-		}), 1, false);
+			Possess(_character);
+			_character->SetActorTickEnabled(false);
+		}
+		ChangeState(NAME_Playing);
+		ClientGotoState(NAME_Playing);
+	}
 }
 
 void AMyWorldTimer::NotifyFinalCountToAllClients()
@@ -398,66 +436,48 @@ void AMyWorldTimer::TurnOnFinalTimerUI_Implementation()
 	}
 }
 
-void AMyWorldTimer::FlyUp_AllMighty_Server_Implementation(float value)
+void AMyWorldTimer::ChangeBindAction_AllMighty()
 {
-	FlyUp_AllMighty_Multi(value);
-}
+	if (!IsLocalController())
+	{
+		return;
+	}
+	auto character = Cast<AMyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)); 
+	if (!character)
+	{
+		return;
+	}
+	/*auto ps = character->GetPlayerState();
+	if (!ps)
+	{
+		return;
+	}
+	auto mps = Cast<AMyPlayerState>(ps);
+	if (!mps)
+	{
+		return;
+	}
+	if (!mps->_allMightyMode)
+	{
+		return;
+	}*/
 
-
-void AMyWorldTimer::FlyUp_AllMighty_Multi_Implementation(float value)
-{
-	FVector currentLoc = GetCharacter()->GetActorLocation();
-	FVector newLoc = currentLoc + 25 * GetCharacter()->GetActorUpVector()*value;
-	GetCharacter()->SetActorLocation(newLoc);
-}
-
-void AMyWorldTimer::MoveForward_AllMighty_Server_Implementation(float value)
-{
-	MoveForward_AllMighty_Multi(value);
-}
-
-void AMyWorldTimer::MoveForward_AllMighty_Multi_Implementation(float value)
-{
-	FVector currentLoc = GetCharacter()->GetActorLocation();
-	FRotator currentRot = GetControlRotation();
-	FRotationMatrix rotmat = FRotationMatrix(currentRot);
-	FVector dir = rotmat.GetUnitAxis(EAxis::X);
-	FVector newLoc = currentLoc + 25 *value * dir;
-	GetCharacter()->SetActorLocation(newLoc);
-}
-
-
-void AMyWorldTimer::MoveRight_AllMighty_Server_Implementation(float value)
-{	
-	MoveRight_AllMighty_Multi(value);
-}
-
-void AMyWorldTimer::MoveRight_AllMighty_Multi_Implementation(float value)
-{
-	FVector currentLoc = GetCharacter()->GetActorLocation();
-	FVector newLoc = currentLoc + 25 * GetCharacter()->GetActorRightVector()*value;
-	GetCharacter()->SetActorLocation(newLoc);
+	
+	character->InputComponent->RemoveActionBinding(TEXT("Jump"), EInputEvent::IE_Pressed);
+	character->InputComponent->RemoveActionBinding(TEXT("Jump"), EInputEvent::IE_Released);
+	
+	character->AllMightyModeBinding();
 }
 
 
 
-void AMyWorldTimer::ChangeBindAction_AllMighty_Implementation()
+
+void AMyWorldTimer::ChangeBindAction_Spectate()
 {
-	InputComponent->RemoveActionBinding(TEXT("Jump"), EInputEvent::IE_Pressed);
-	InputComponent->RemoveActionBinding(TEXT("Jump"), EInputEvent::IE_Released);
-
-	GetCharacter()->InputComponent->BindAxis("FlyUp", this, &AMyWorldTimer::FlyUp_AllMighty_Server);
-
-	GetCharacter()->InputComponent->BindAxis("MoveForward", this, &AMyWorldTimer::MoveForward_AllMighty_Server);
-	GetCharacter()->InputComponent->BindAxis("MoveRight", this, &AMyWorldTimer::MoveRight_AllMighty_Server);
-
-}
-
-
-
-void AMyWorldTimer::ChangeBindAction_Spectate_Implementation()
-{
+	if (!IsLocalController())
+	{
+		return;
+	}
 	InputComponent->BindAction(TEXT("Spectate"), IE_Pressed, this, &AMyWorldTimer::Spectate);
 	InputComponent->BindAction(TEXT("ViewChange"), IE_Pressed, this, &AMyWorldTimer::ChangeView);
 }
-

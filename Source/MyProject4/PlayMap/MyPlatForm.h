@@ -34,18 +34,19 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION(Server,Reliable)
-	void Transform(float deltaTime);
+	UFUNCTION(NetMulticast, Unreliable)
+	void Transform_Multi(float delta);
 
-	UFUNCTION(NetMulticast, Reliable)
-		void Transform_Multi(float deltaTime);
-
-
-	UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION(NetMulticast, Unreliable)
 		void SetTransparency();
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void TurnOnToggle();
+	void TurnOnToggle_Multi();
+
+
+	UFUNCTION(BlueprintCallable)
+		void GenerateTimer();
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "StaticMesh")
 	class UStaticMeshComponent* _staticMesh;
@@ -70,5 +71,9 @@ private:
 
 	FTimerHandle _timerHandle;
 
+	FTimerHandle _timerHandle2;
 
+	class AMyWorldTimer* _client;
+
+	class AMyGameStateBase* _gameState;
 };

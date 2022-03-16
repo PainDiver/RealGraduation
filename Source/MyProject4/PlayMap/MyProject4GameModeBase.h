@@ -54,6 +54,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	inline uint8 GetNumOfFinished() { return _NumOfFinished; }
 
+	UFUNCTION(BlueprintCallable)
+		TArray<FTimerHandle> GetTickTimers();
+
+	UFUNCTION(BlueprintCallable)
+		void RegisterTickTimers(const FTimerHandle& timer);
 
 
 
@@ -71,6 +76,8 @@ private:
 	void CountFinalTimer(const float& DeltaTime);
 
 	void SpawnBoss();
+
+
 
 	
 	uint8 _NumOfFinished;
@@ -93,5 +100,7 @@ private:
 
 	FTimerHandle _delayTimer;
 
-	
+
+	UPROPERTY()
+		TArray<FTimerHandle> _tickTimers;
 };

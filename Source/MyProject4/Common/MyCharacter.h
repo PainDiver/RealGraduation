@@ -81,6 +81,29 @@ public:
 		void SetColor_Multi(const FLinearColor& color);
 
 
+
+	UFUNCTION(Server, Reliable)
+		void FlyUp_AllMighty_Server(float value);
+
+	UFUNCTION(NetMulticast, Reliable)
+		void FlyUp_AllMighty_Multi(float value);
+
+
+	UFUNCTION(Server, Reliable)
+		void MoveForward_AllMighty_Server(float value);
+
+	UFUNCTION(NetMulticast, Reliable)
+		void MoveForward_AllMighty_Multi(float value);
+
+
+	UFUNCTION(Server, Reliable)
+		void MoveRight_AllMighty_Server(float value);
+
+	UFUNCTION(NetMulticast, Reliable)
+		void MoveRight_AllMighty_Multi(float value);
+
+	void AllMightyModeBinding();
+
 // public UPROPERTY
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAceess = "true"), Category = Camera)
 	class UCameraComponent* _camera;
@@ -103,9 +126,9 @@ public:
 	UPROPERTY()
 		class UMySaveGame* _saveGame;
 
+
 private:
 
-	
 
 	void InitializeInstance();
 

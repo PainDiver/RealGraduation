@@ -18,6 +18,9 @@
 #include "SocketSubsystem.h"
 
 
+#include "GenericPlatform/GenericPlatformProcess.h"
+
+
 const uint8 UMyGameInstance::MAX_PLAYER = 8;
 const FName UMyGameInstance::SESSION_NAME = TEXT("TwistRunGame");
 
@@ -191,10 +194,8 @@ void UMyGameInstance::OnDestroySessionComplete(FName sessionName, bool success)
 		//UGameplayStatics::DeleteGameInSlot(HOST_MIGRATION, 0);
 		FGenericPlatformMisc::RequestExit(true);
 	}
-
 	if (success)
 	{
-		
 		ReturnToMainMenu();
 	}
 }
@@ -203,29 +204,34 @@ void UMyGameInstance::OnDestroySessionComplete(FName sessionName, bool success)
 void UMyGameInstance::OnNetworkFailure(UWorld* world, UNetDriver* netDriver, ENetworkFailure::Type failureType, const FString& error)
 {
 	BindAltF4(false);
-	APlayerController* playerController = GetFirstLocalPlayerController();
 	
+
 	auto existingSession = _sessionInterface->GetNamedSession(SESSION_NAME);
-	if (existingSession != nullptr)
+	
+
+	
+	if (existingSession != nullptr && _sessionInterface)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Migrating Start"));
 		if (_migration._IsHost == true)
 		{
-			_sessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMyGameInstance::OnDestroySessionServerMigration);
-			_migration._IsHost = false;
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "you're new host");
+			_sessionInterface->OnDestroySessionCompleteDelegates.Clear();
+			_sessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMyGameInstance::OnDestroySessionServerMigration);
 		}
 		else
 		{
-			_sessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMyGameInstance::OnDestroySessionClientMigration);
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "you're client traveling to new host");
+			_sessionInterface->OnDestroySessionCompleteDelegates.Clear();
+			_sessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMyGameInstance::OnDestroySessionClientMigration);
 		}
-
 		_sessionInterface->DestroySession(SESSION_NAME);
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "Session Destroyed for no host");	
+		UE_LOG(LogTemp, Warning, TEXT("Migrating Done"));
 	}
 	else
 	{
 		ReturnToMainMenu();
+		UE_LOG(LogTemp, Warning, TEXT("Returning To Menu"));
 	}
 }
 
@@ -323,9 +329,9 @@ void UMyGameInstance::OnDestroySessionServerMigration(FName sessionName, bool su
 	FTimerHandle delay;
 	GetTimerManager().SetTimer(delay, FTimerDelegate::CreateLambda([&]()
 	{
-	GetCurrentSessionInterface()->CreateSession(0,SESSION_NAME, *(_lastSettings));
+		GetCurrentSessionInterface()->CreateSession(0,SESSION_NAME, *(_lastSettings));
 	}
-	), 0.2,false);
+	), 0.5,false);
 }
 
 void UMyGameInstance::OnMigrationCreateSessionComplete(FName sessionName, bool success)
@@ -340,6 +346,8 @@ void UMyGameInstance::OnMigrationCreateSessionComplete(FName sessionName, bool s
 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "Server Travel");
 	CheckOpenPublicConnection(true);
 
+	GetCurrentSessionInterface()->OnDestroySessionCompleteDelegates.Clear();
+	GetCurrentSessionInterface()->OnDestroySessionCompleteDelegates.AddUObject(this, &UMyGameInstance::OnDestroySessionComplete);
 }
 
 
@@ -353,7 +361,7 @@ void UMyGameInstance::OnDestroySessionClientMigration(FName sessionName, bool su
 		_sessionSearch->MaxSearchResults = 100;
 		_sessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 		_sessionSearch->bIsLanQuery = _lanCheck;
-		
+		_sessionSearch->TimeoutInSeconds = 2.0f;
 		GetCurrentSessionInterface()->OnFindSessionsCompleteDelegates.Clear();
 		GetCurrentSessionInterface()->OnFindSessionsCompleteDelegates.AddUObject(this, &UMyGameInstance::OnFindSessionMigration);
 		GetCurrentSessionInterface()->FindSessions(0, _sessionSearch.ToSharedRef());
@@ -517,7 +525,7 @@ void UMyGameInstance::BindAltF4(bool on)
 					FindLowestPingAndNotify();
 					_exitRequest = true;
 					FTimerHandle delay;
-					GetTimerManager().SetTimer(delay, FTimerDelegate::CreateLambda([&]() {DestroySession(); }), 2.0, false);			
+					GetTimerManager().SetTimer(delay, FTimerDelegate::CreateLambda([&]() {DestroySession(); }), 1.5, false);			
 					return false;
 				});
 		}
@@ -547,3 +555,25 @@ FString UMyGameInstance::GetMyIpAddress()
 	}
 	return IpAddr;
 }
+
+
+int UMyGameInstance::CreateNewProcess(FString url, FString Attributes)
+{
+	static int port = GetWorld()->URL.Port;
+	static int childPort = port;
+
+
+	FString ExecuterPath = FPaths::ProjectDir()+"Saved\\StagedBuilds\\WindowsNoEditor\\MyProject4.exe";
+
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *ExecuterPath);
+
+	uint32 OutProcessID = 0;
+
+	FProcHandle ProcHandle = FPlatformProcess::CreateProc(*ExecuterPath, *Attributes, true, false, false, &OutProcessID, 0, nullptr,nullptr);	
+	
+	childPort++;
+	_childProcesses.Add({ ProcHandle, childPort });
+
+	return ProcHandle.IsValid() ? OutProcessID : -1;
+}
+

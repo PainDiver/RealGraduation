@@ -11,6 +11,7 @@ enum class EPickUpType : uint8
 {
 	EPT_Booster				UMETA(DisplayName = "Booster"),
 	EPT_Rocket				UMETA(DisplayName = "Rocket"),
+	EPT_Grab				UMETA(DisplayName = "Grab"),
 	EPT_Random				UMETA(DisplayName = "Random"),
 	EPT_MAX					UMETA(DisplayName = "DefaultMax")
 };
@@ -63,5 +64,6 @@ private:
 
 	class AMyPlayerState* _playerState;
 
+	TSubclassOf<AActor> _grabProjectile;
 
 };

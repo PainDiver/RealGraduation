@@ -8,6 +8,9 @@
 #include "Net/UnrealNetwork.h"
 #include "GameFrameWork/GameStateBase.h"
 #include "GameFrameWork/Character.h"
+#include "MyWorldTimer.h"
+#include "MyGameStateBase.h"
+#include "MyProject4GameModeBase.h"
 
 // Sets default values
 AMyPlatForm::AMyPlatForm()
@@ -35,31 +38,49 @@ AMyPlatForm::AMyPlatForm()
 // Called when the game starts or when spawned
 void AMyPlatForm::BeginPlay()
 {
-	Super::BeginPlay(); 
+	Super::BeginPlay();
+
 	_dynamicMatInstance = _staticMesh->CreateAndSetMaterialInstanceDynamic(0);
+	if (!_dynamicMatInstance)
+	{
+		return;
+	}
 	_dynamicMatInstance->GetMaterial()->GetVectorParameterValue(TEXT("Color"), _platFormColor);
 
-	GetWorldTimerManager().SetTimer(_timerHandle, this, &AMyPlatForm::TurnOnToggle, 5.f, true, 5.0f);
-	auto character =Cast<AActor>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	if (character)
+	_gameState = Cast<AMyGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
+
+	if (HasAuthority())
 	{
-		SetOwner(character);
+		GenerateTimer();
 	}
 }
+
+
+void AMyPlatForm::GenerateTimer()
+{
+	GetWorldTimerManager().SetTimer(_timerHandle, this, &AMyPlatForm::TurnOnToggle_Multi, 5.f, true, 5.0f);
+	GetWorldTimerManager().SetTimer(_timerHandle2, FTimerDelegate::CreateLambda([&]()
+		{
+			Transform_Multi(0.01);
+		}), 0.01, true);
+
+	auto gameMode = Cast<AMyProject4GameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (gameMode)
+	{
+		gameMode->RegisterTickTimers(_timerHandle);
+		gameMode->RegisterTickTimers(_timerHandle2);
+	}
+}
+
 
 // Called every frame
 void AMyPlatForm::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	Transform(DeltaTime);
 }
 
-void AMyPlatForm::Transform_Implementation(float DeltaTime)
-{
-	Transform_Multi(DeltaTime);
-}
 
-void AMyPlatForm::Transform_Multi_Implementation(float DeltaTime)
+void AMyPlatForm::Transform_Multi_Implementation(float delta)
 {
 	switch (_platformType)
 	{
@@ -67,13 +88,13 @@ void AMyPlatForm::Transform_Multi_Implementation(float DeltaTime)
 	{
 		FRotator rotation = GetActorRotation();
 		FRotator xRot = { 0,0,_speed };
-		AddActorLocalRotation(xRot * DeltaTime);
+		AddActorLocalRotation(xRot * delta);
 		break;
 	}
 
 	case EPlatFormType::EPF_TranslatingPlatform:
 	{
-		FVector dx(_speed * DeltaTime, 0, 0);
+		FVector dx(_speed * delta, 0, 0);
 		if (_toggle)
 		{
 			dx = -dx;
@@ -86,7 +107,7 @@ void AMyPlatForm::Transform_Multi_Implementation(float DeltaTime)
 	{
 		if (_toggle)
 		{
-			_platFormColor.A += DeltaTime / (_speed / 5);
+			_platFormColor.A += delta / (_speed / 5);
 
 			if (_platFormColor.A > 0.2f)
 			{
@@ -95,7 +116,7 @@ void AMyPlatForm::Transform_Multi_Implementation(float DeltaTime)
 		}
 		else
 		{
-			_platFormColor.A -= DeltaTime / (_speed / 5);
+			_platFormColor.A -= delta / (_speed / 5);
 
 			if (_platFormColor.A < 0.2f)
 			{
@@ -111,7 +132,6 @@ void AMyPlatForm::Transform_Multi_Implementation(float DeltaTime)
 	}
 }
 
-
 void AMyPlatForm::SetTransparency_Implementation()
 {
 	_dynamicMatInstance = _staticMesh->CreateAndSetMaterialInstanceDynamic(0);
@@ -119,15 +139,12 @@ void AMyPlatForm::SetTransparency_Implementation()
 }
 
 
-
-
-void AMyPlatForm::TurnOnToggle_Implementation()
+void AMyPlatForm::TurnOnToggle_Multi_Implementation()
 {
 	if (_toggle)
 		_toggle = false;
 	else
 		_toggle = true;
-
 }
 
 

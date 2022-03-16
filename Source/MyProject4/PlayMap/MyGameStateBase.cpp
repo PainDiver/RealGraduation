@@ -16,6 +16,7 @@ AMyGameStateBase::AMyGameStateBase()
 	PrimaryActorTick.bCanEverTick = true;
 	_finalTimer = 0;
 	_StartTimer = 5;
+	_bGameEnded = false;
 }
 
 void AMyGameStateBase::BeginPlay()
@@ -26,13 +27,15 @@ void AMyGameStateBase::BeginPlay()
 
 void AMyGameStateBase::NotifyFin_Implementation()
 {
-	TArray<AActor*> outactors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMyWorldTimer::StaticClass(), outactors);
+	_bGameEnded = true;
+
+	TArray<AActor*> controllers;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMyWorldTimer::StaticClass(), controllers);
 	
 	TArray<AActor*> trivialActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), trivialActors);
 
-	for (auto playerController : outactors)
+	for (auto playerController : controllers)
 	{
 		AMyWorldTimer* pc = Cast<AMyWorldTimer>(playerController);
 		pc->GetWorldTimerManager().ClearAllTimersForObject(pc);
@@ -40,23 +43,26 @@ void AMyGameStateBase::NotifyFin_Implementation()
 	for (auto actor : trivialActors)
 	{
 		actor->SetActorTickEnabled(false);
-		actor->GetWorldTimerManager().ClearAllTimersForObject(actor);
+		GetWorldTimerManager().ClearAllTimersForObject(actor);
 	}
 
-	NotifyFin_Client();
-}
-
-void AMyGameStateBase::NotifyFin_Client_Implementation()
-{
-	for (auto ps : PlayerArray)
+	if (GetWorld()->IsServer())
 	{
-		AMyWorldTimer* pc = Cast<AMyWorldTimer>(ps->GetPawn()->GetController());
-		if (pc)
+		auto gameMode = Cast<AMyProject4GameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+
+		if (gameMode)
 		{
-			pc->GetWorldTimerManager().ClearAllTimersForObject(pc);
+			auto timers = gameMode->GetTickTimers();
+
+			for (auto timer : timers)
+			{
+				GetWorldTimerManager().ClearTimer(timer);
+			}
 		}
 	}
 }
+
+
 
 void AMyGameStateBase::LetPlayerMove_Implementation()
 {
@@ -92,4 +98,5 @@ void AMyGameStateBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 	DOREPLIFETIME(AMyGameStateBase, _bIsAllPlayersReady);
 	DOREPLIFETIME(AMyGameStateBase, _bGameStarted);
 	DOREPLIFETIME(AMyGameStateBase, _connectedPlayersInfo);
+	DOREPLIFETIME(AMyGameStateBase, _bGameEnded);
 }

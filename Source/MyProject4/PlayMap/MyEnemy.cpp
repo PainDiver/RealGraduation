@@ -8,7 +8,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-
+#include "MyGameStateBase.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AMyEnemy::AMyEnemy()
@@ -53,13 +54,15 @@ void AMyEnemy::BeginPlay()
 
 	GetMesh()->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 
+
+	_gameState = Cast<AMyGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
 	FVector loc = GetActorLocation();
 	for (int i =0; i < _numOfPatrolPoints; i++)
 	{
 		_patrolPoints.Add(FMath::RandPointInBox(_patrolBox));
 	}
 
-
+	
 }
 
 // Called every frame
@@ -68,14 +71,22 @@ void AMyEnemy::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 
-	switch (_eMovementStatus)
+	if (!_gameState)
 	{
+		_gameState = Cast<AMyGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
+		return;
+	}
+	
+
+	if (_gameState && !_gameState->_bGameEnded)
+	{
+		switch (_eMovementStatus)
+		{
 		case EEnemyMovementStatus::EMS_Idle:
 		{
 			Patrol();
 			break;
 		}
-
 		case EEnemyMovementStatus::EMS_Chasing:
 		{
 			MoveToTarget(_target);
@@ -83,15 +94,17 @@ void AMyEnemy::Tick(float DeltaTime)
 		}
 		default:
 			break;
+		}
+
+		if ((_targetLocation - GetActorLocation()).Size() < 100.f)
+		{
+			SetState(EEnemyMovementStatus::EMS_Idle);
+		}
 	}
-
-
-	if ((_targetLocation - GetActorLocation()).Size() < 100.f)
-	{
-		SetState(EEnemyMovementStatus::EMS_Idle);
-	}
-
 }
+
+
+
 
 // Called to bind functionality to input
 void AMyEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

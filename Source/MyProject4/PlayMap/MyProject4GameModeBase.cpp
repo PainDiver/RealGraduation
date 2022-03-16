@@ -43,7 +43,6 @@ void AMyProject4GameModeBase::BeginPlay()
 	Super::BeginPlay();
 
 	_gameState = GetGameState<AMyGameStateBase>();
-
 	GetWorldTimerManager().SetTimer(_timerForCheckConnection, FTimerDelegate::CreateLambda([&]()
 		{
 			_abandonUnconnectedPlayersWithIn -= 0.1;
@@ -66,7 +65,7 @@ void AMyProject4GameModeBase::BeginPlay()
 				GetWorldTimerManager().ClearTimer(_delayTimer);
 				GetWorldTimerManager().ClearTimer(_timerForCheckConnection);
 			}
-			else if(instance->_numOfPlayerInCurrentSession == gameState->_connectedPlayersInfo.Num() || _abandonUnconnectedPlayersWithIn <= 0 )
+			else if(instance->_numOfPlayerInCurrentSession-1 == gameState->_connectedPlayersInfo.Num() || _abandonUnconnectedPlayersWithIn <= 0 )
 			{
 				GetWorld()->GetTimerManager().SetTimer(_delayTimer, FTimerDelegate::CreateLambda([&]()
 					{
@@ -83,12 +82,19 @@ void AMyProject4GameModeBase::BeginPlay()
 void AMyProject4GameModeBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (_gameState->_bIsAllPlayersReady)
+	if (!_gameState)
 	{
-		CountEnemyTimer(DeltaTime);
-		CountFinalTimer(DeltaTime);
-		CountStartTimer(DeltaTime);
+		return;
+	}
+
+	if (!_bPaused)
+	{
+		if (_gameState->_bIsAllPlayersReady)
+		{
+			CountEnemyTimer(DeltaTime);
+			CountFinalTimer(DeltaTime);
+			CountStartTimer(DeltaTime);
+		}
 	}
 }
 
@@ -106,6 +112,7 @@ void AMyProject4GameModeBase::PreLogin(const FString& Options, const FString& Ad
 APlayerController* AMyProject4GameModeBase::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
 	return Super::Login(NewPlayer, InRemoteRole, Options, Portal, UniqueId, ErrorMessage);
+
 }
 
 void AMyProject4GameModeBase::Logout(AController* Exiting)
@@ -158,6 +165,7 @@ void AMyProject4GameModeBase::CountFinalTimer(const float& DeltaTime)
 			_finalTimer = 0;
 			_bPaused = true;
 			_bIsFinal = false;
+			
 			UE_LOG(LogTemp, Warning, TEXT("GAME over!!"));
 			//game stop here
 
@@ -189,3 +197,12 @@ void AMyProject4GameModeBase::SpawnBoss()
 	}
 }
 
+TArray<FTimerHandle> AMyProject4GameModeBase::GetTickTimers()
+{
+	return _tickTimers;
+}
+
+void AMyProject4GameModeBase::RegisterTickTimers(const FTimerHandle& timer)
+{
+	_tickTimers.Add(timer);
+}

@@ -18,7 +18,7 @@ UMyCharacterActionComponent::UMyCharacterActionComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
+	
 	// ...
 }
 
@@ -66,9 +66,15 @@ FCharacterMoveInfo UMyCharacterActionComponent::CreateMove(const float& DeltaTim
 
 void UMyCharacterActionComponent::SimulateMove(const FCharacterMoveInfo& MoveInfo)
 {
+
 	if (!_owner.IsValid() || !_owner->_characterMovementComponent) return ;
 	
-	_owner->GetMovementComponent()->SetComponentTickInterval(MoveInfo._deltaTime);
+	auto movementComponent = _owner->GetMovementComponent();
+	if (!movementComponent)
+	{
+		return;
+	}
+	movementComponent->SetComponentTickInterval(MoveInfo._deltaTime);
 
 	AddMoveForward(MoveInfo._deltaTime, MoveInfo._forwardInput); //movement component won't behave in Server
 	AddMoveRight(MoveInfo._deltaTime, MoveInfo._rightInput);
@@ -124,14 +130,20 @@ void UMyCharacterActionComponent::Interact(bool Input)
 {
 	if (Input && _interactDele.IsBound())
 	{
-		_interactDele.Broadcast(GetOwner());
-		_interactDele.Clear();
+		auto owner = GetOwner();
+		if (owner)
+		{
+			_interactDele.Broadcast(owner);
+			_interactDele.Clear();
+		}
 	}
 	else if(Input)
 	{
-		UseItem();
+		if (_owner->HasAuthority())
+		{
+			UseItem();
+		}
 	}
-
 
 }
 

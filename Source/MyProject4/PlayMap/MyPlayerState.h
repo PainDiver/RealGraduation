@@ -49,6 +49,10 @@ public:
 		bool _allMightyMode;
 
 
+
+
+
+
 	UFUNCTION(Server, Reliable)
 		void SetCharacterInfo_Server(const FCharacterInfo& info);
 

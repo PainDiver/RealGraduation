@@ -18,14 +18,14 @@ UMySaveGame::UMySaveGame()
 
 void UMySaveGame::ClientLoad_Implementation(const UWorld* worldContext)
 {	
+	UE_LOG(LogTemp, Warning, TEXT("Loading..."));
 	auto instance = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(HOST_MIGRATION, 0));
 	if (!instance)
 	{
 		return;
 	}
 	RequestInitialLoadForMigration(instance->_playerData._transform, worldContext);
-	UGameplayStatics::DeleteGameInSlot(HOST_MIGRATION, 0);
-	
+	UE_LOG(LogTemp, Warning, TEXT("Loaded"));
 }
 
 void UMySaveGame::RequestInitialLoadForMigration_Implementation(const FTransform& transform, const UWorld* worldContext)
@@ -37,12 +37,18 @@ void UMySaveGame::RequestInitialLoadForMigration_Implementation(const FTransform
 
 void UMySaveGame::Save_Implementation(const UWorld* worldContext)
 {
+	if (!worldContext)
+	{
+		return;
+	}
+
 	auto instance = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(HOST_MIGRATION, 0));
 	if (!instance)
 	{
 		instance = Cast<UMySaveGame>(UGameplayStatics::CreateSaveGameObject(UMySaveGame::StaticClass()));
 	}
-	
+	UE_LOG(LogTemp, Warning, TEXT("saving.."));
+
 	SaveAllData(instance, worldContext);
 
 	GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "Saved");
@@ -54,15 +60,14 @@ void UMySaveGame::Save_Implementation(const UWorld* worldContext)
 
 void UMySaveGame::ServerLoad_Implementation(UWorld* worldContext)
 {
-
+	UE_LOG(LogTemp, Warning, TEXT("Loading..."));
 	auto instance = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(HOST_MIGRATION, 0));
 	if (!instance)
 	{
 		return;
 	}
 	LoadAllData(instance, worldContext);
-	UGameplayStatics::DeleteGameInSlot(HOST_MIGRATION, 0);
-
+	UE_LOG(LogTemp, Warning, TEXT("Loaded"));
 }
 
 
@@ -80,14 +85,21 @@ void UMySaveGame::SaveAllData_Implementation(UMySaveGame* saveGame, const UWorld
 	{
 		return;
 	}
+
 	saveGame->_playerData._itemNum = ps->_Inventory.Num();
-	int i=0;
-	for (const auto& pickup : ps->_Inventory)
+	if (saveGame->_playerData._itemNum == 0)
 	{
-		if (pickup)
+	}
+	else
+	{
+		int i = 0;
+		for (const auto& pickup : ps->_Inventory)
 		{
-			saveGame->_playerData._type[i] = pickup->_ePickUpType;
-			i++;
+			if (pickup)
+			{
+				saveGame->_playerData._type[i] = pickup->_ePickUpType;
+				i++;
+			}
 		}
 	}
 
@@ -117,6 +129,7 @@ void UMySaveGame::LoadAllData_Implementation(UMySaveGame* saveGame, UWorld* worl
 		character->SetActorTransform(saveGame->_playerData._transform);
 	}
 	auto ps = Cast<AMyPlayerState>(character->GetPlayerState());
+	
 	for (int i = 0; i < saveGame->_playerData._itemNum; i++)
 	{
 		auto item = worldContext->SpawnActor<AMyPickups>();
@@ -125,6 +138,7 @@ void UMySaveGame::LoadAllData_Implementation(UMySaveGame* saveGame, UWorld* worl
 		item->OnActorBeginOverlap.Clear();
 		ps->_Inventory.Add(item);
 	}
+	UE_LOG(LogTemp, Warning, TEXT("GameItemLoaded"));
 
 	TArray<AActor*> actors;
 	UGameplayStatics::GetAllActorsWithInterface(worldContext, UMyStaticObjectSaveInterface::StaticClass(), actors);
@@ -140,7 +154,8 @@ void UMySaveGame::LoadAllData_Implementation(UMySaveGame* saveGame, UWorld* worl
 			}
 		}
 	}
-
+	UE_LOG(LogTemp, Warning, TEXT("staticObejctLoaded"));
+	
 	UGameplayStatics::GetAllActorsWithInterface(worldContext, UMyInstantObjectSaveInterface::StaticClass(), actors);
 	for (const auto& object : actors)
 	{
@@ -155,20 +170,26 @@ void UMySaveGame::LoadAllData_Implementation(UMySaveGame* saveGame, UWorld* worl
 			}
 		}
 	}
+	UE_LOG(LogTemp, Warning, TEXT("instantObejctLoaded"));
 
 	auto instance = Cast<UMyGameInstance>(UGameplayStatics::GetGameInstance(worldContext));
 	auto state = UGameplayStatics::GetGameState(worldContext);
 	auto mode = UGameplayStatics::GetGameMode(worldContext);
 
-	if (state && mode)
+	if (state && mode &&instance)
 	{
 		auto gameState = Cast<AMyGameStateBase>(state);
 		auto gameMode = Cast<AMyProject4GameModeBase>(mode);
-		gameState->_bGameStarted = instance->GetMigrationInfo()._IsStarted;
-		if (gameState->_bGameStarted)
+		if (gameState && gameMode)
 		{
-			gameMode->_StartTimer = 0;
+			gameState->_bGameStarted = instance->GetMigrationInfo()._IsStarted;
+			if (gameState->_bGameStarted)
+			{
+				gameMode->_StartTimer = 0;
+			}
 		}
 	}
+	UE_LOG(LogTemp, Warning, TEXT("GameInfoLoaded"));
+
 
 }

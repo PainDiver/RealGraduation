@@ -20,6 +20,10 @@ GetWorld()->GetTimerManager().SetTimer(WaitHandle, FTimerDelegate::CreateLambda(
 		delay 간편함수 
 */
 
+
+
+
+
 UCLASS(BlueprintType, Blueprintable)
 class MYPROJECT4_API AMyWorldTimer : public APlayerController
 {
@@ -40,6 +44,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel) override;
+
 
 
 	UFUNCTION(Server, BlueprintCallable,Reliable)
@@ -86,13 +91,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 		class AMyCharacter* _character;
 
+	
 private:
 
-	UFUNCTION(Client, Reliable)
-		void ChangeBindAction_AllMighty();
 
-	UFUNCTION(Client, Reliable)
-		void ChangeBindAction_Spectate();
+	void ChangeBindAction_AllMighty();
+
+	void ChangeBindAction_Spectate();
 
 	UFUNCTION(Client, Unreliable)
 		void BrushSockets(int index, uint8 ept);
@@ -109,29 +114,6 @@ private:
 	UFUNCTION(NetMulticast,BlueprintCallable, Reliable)
 		void AllMightyMode();
 
-
-
-	UFUNCTION(Server, Reliable)
-		void FlyUp_AllMighty_Server(float value);
-
-	UFUNCTION(NetMulticast, Reliable)
-		void FlyUp_AllMighty_Multi(float value);
-
-
-	UFUNCTION(Server, Reliable)
-	void MoveForward_AllMighty_Server(float value);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void MoveForward_AllMighty_Multi(float value);
-
-
-	UFUNCTION(Server, Reliable)
-	void MoveRight_AllMighty_Server(float value);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void MoveRight_AllMighty_Multi(float value);
-
-
 	void InitializeInstance();
 
 	void InitializeHUD();
@@ -141,7 +123,8 @@ private:
 	void SaveWinnerInfo();
 
 	
-	void SpectateMode();
+	UFUNCTION(BlueprintCallable)
+	void SpectateMode(bool value);
 
 	void NotifyFinalCountToAllClients();
 
@@ -168,11 +151,9 @@ private:
 
 	int _currentIndex;
 
-
 	FTimerHandle UpdateHandle;
 
 	FTimerHandle DelayHandle;
-
 
 	//AMyActorSubClass* MyActor = GetWorld()->SpawnActor<AMyActorSubClass>(AMyActorSubClass::StaticClass());
 };

@@ -13,6 +13,7 @@
 #include "../Common/MyGameInstance.h"
 #include "GameFramework/Character.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "../Common/MyCharacter.h"
 
 
 AReadyRoomPlayerController::AReadyRoomPlayerController()
@@ -49,8 +50,11 @@ void AReadyRoomPlayerController::PreClientTravel(const FString& PendingURL, ETra
 			widget->RemoveFromParent();
 		}
 	}
-	Super::PreClientTravel(PendingURL,TravelType,bIsSeamlessTravel);
+
+	Super::PreClientTravel(PendingURL,TravelType,bIsSeamlessTravel);	
 }
+
+
 
 
 
@@ -148,6 +152,19 @@ void AReadyRoomPlayerController::Initialize()
 		return;
 	}
 
+	if (GetWorld()->IsServer())
+	{
+		if (_MapSelectionHUDAsset)
+		{
+			auto mapSelection = CreateWidget<UUserWidget>(this, _MapSelectionHUDAsset);
+			if (mapSelection)
+			{
+				mapSelection->SetVisibility(ESlateVisibility::Visible);
+				mapSelection->AddToViewport();
+			}
+		}
+	}
+
 	if (_gameInstance->_readyHUDAsset)
 	{
 		if (!_ReadyHUDOverlay)
@@ -200,7 +217,7 @@ void AReadyRoomPlayerController::Initialize()
 					}
 				}
 			}
-		), 0.5f, true, 0);
+		), 2.f, true, 0);
 	}
 
 	_bChattable = true;

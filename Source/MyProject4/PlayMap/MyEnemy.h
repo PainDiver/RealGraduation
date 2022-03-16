@@ -89,4 +89,6 @@ private:
 
 	TArray<FVector> _patrolPoints;
 
+	class AMyGameStateBase* _gameState;
+
 };

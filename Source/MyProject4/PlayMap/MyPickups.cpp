@@ -12,6 +12,7 @@
 #include "../Common/MyCharacterActionComponent.h"
 #include "Components/SphereComponent.h"
 #include "../PlayMap/MyPickups.h"
+#include "Camera/CameraComponent.h"
 
 // Sets default values
 AMyPickups::AMyPickups()
@@ -20,6 +21,12 @@ AMyPickups::AMyPickups()
 	_effect = 1.5f;
 	
 	_ePickUpType = _ePickUpType = static_cast<EPickUpType>(FMath::RandRange(0, static_cast<int32>(EPickUpType::EPT_MAX) - 2));
+
+	static ConstructorHelpers::FClassFinder<AActor> grabProjectile(TEXT("/Game/BluePrintFrom_Me/Grab"));
+	if (grabProjectile.Succeeded())
+	{
+		_grabProjectile = grabProjectile.Class;
+	}
 
 }
 
@@ -41,6 +48,7 @@ void AMyPickups::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor
 	{
 		if (HasAuthority())
 		{
+			
 			RPCAdd(_character);
 		}
 	}
@@ -83,6 +91,7 @@ void AMyPickups::Activate_Implementation()
 	{
 		_character->GetCharacterMovement()->MaxWalkSpeed *= _effect;
 		GetWorld()->GetTimerManager().SetTimer(_timerHandle, FTimerDelegate::CreateUObject(this, &AMyPickups::RestoreSelf), 10.f, false);
+		UE_LOG(LogTemp, Warning, TEXT("%f"), _character->GetCharacterMovement()->MaxWalkSpeed);
 		break;
 	}
 	case EPickUpType::EPT_Rocket:
@@ -90,6 +99,26 @@ void AMyPickups::Activate_Implementation()
 		_character->GetCharacterMovement()->AddImpulse(FVector(0, 0, 200000));
 		GetWorld()->GetTimerManager().SetTimer(_timerHandle, FTimerDelegate::CreateUObject(this, &AMyPickups::RestoreSelf), 10.f, false);
 		break;
+	}
+	case EPickUpType::EPT_Grab:
+	{
+		auto owner = GetOwner();
+		auto character = Cast<AMyCharacter>(owner);
+		auto newLocation = character->GetActorLocation()+FVector(0,0,-25) + character->GetActorForwardVector()*100;
+		auto newRotation = character->_camera->GetForwardVector().Rotation();
+		
+		AActor* projectile;
+		if (_grabProjectile)
+		{
+			projectile = GetWorld()->SpawnActor(_grabProjectile, &newLocation, &newRotation);
+			if (projectile)
+			{
+				projectile->SetReplicates(true);
+				projectile->SetOwner(GetOwner());
+				UE_LOG(LogTemp, Warning, TEXT("spawned!"));
+			}
+		}
+
 	}
 	default:
 		break;
