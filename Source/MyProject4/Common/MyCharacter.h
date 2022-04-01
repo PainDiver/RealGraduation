@@ -141,8 +141,6 @@ private:
 
 	void Turn(float value);
 
-	void JumpCharacter();
-
 	void Interact();
 
 	void Attack();

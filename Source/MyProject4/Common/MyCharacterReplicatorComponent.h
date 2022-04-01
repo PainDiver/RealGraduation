@@ -8,17 +8,17 @@
 #include "MyCharacterReplicatorComponent.generated.h"
 
 
-USTRUCT()
-struct FMoveState
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY()
-	FTransform _transform;
-
-	UPROPERTY()
-	FCharacterMoveInfo _lastMove;
-};
+//USTRUCT()
+//struct FMoveState
+//{
+//	GENERATED_USTRUCT_BODY()
+//
+//	UPROPERTY()
+//	FTransform _transform;
+//
+//	UPROPERTY()
+//	FCharacterMoveInfo _lastMove;
+//};
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -38,21 +38,21 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UFUNCTION(Server, Reliable)
-	void SendMoveToServer(const FCharacterMoveInfo& move);
+	//UFUNCTION(Server, Reliable)
+	//void SendMoveToServer(const FCharacterMoveInfo& move);
 
 	UFUNCTION(Server, Reliable)
-		void RespawnCheck();
+		void Respawn();
 
-	UFUNCTION()
-		void OnRep_ServerChange();
+	//UFUNCTION()
+	//	void OnRep_ServerChange();
 
 
-	void EnqueueAcknowledgedMove(const FCharacterMoveInfo& move) { _unacknowledgedMoves.Add(move); }
+	//void EnqueueAcknowledgedMove(const FCharacterMoveInfo& move) { _unacknowledgedMoves.Add(move); }
 
 	
 	//debug
-	int GetMoves() { return _unacknowledgedMoves.Num();}
+//	int GetMoves() { return _unacknowledgedMoves.Num();}
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Debug")
 		FVector _respawn;
@@ -60,10 +60,10 @@ public:
 private:	
 
 
-	void ClearUnacknowledgedMoves(const FCharacterMoveInfo& lastMove);
+	//void ClearUnacknowledgedMoves(const FCharacterMoveInfo& lastMove);
 
-	UPROPERTY(ReplicatedUsing = OnRep_ServerChange)
-	FMoveState _serverState;
+	//UPROPERTY(ReplicatedUsing = OnRep_ServerChange)
+	//FMoveState _serverState;
 
 
 	
@@ -73,5 +73,5 @@ private:
 
 	UCharacterMovementComponent* _characterMovement;
 
-	TArray<FCharacterMoveInfo> _unacknowledgedMoves;
+	//TArray<FCharacterMoveInfo> _unacknowledgedMoves;
 };

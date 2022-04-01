@@ -38,58 +38,55 @@ void UMyCharacterReplicatorComponent::TickComponent(float DeltaTime, ELevelTick 
 	// ...
 }
 
-void UMyCharacterReplicatorComponent::RespawnCheck_Implementation()
+void UMyCharacterReplicatorComponent::Respawn_Implementation()
 {
-	if (_owner->GetActorLocation().Z < -2000 || _owner->GetActorLocation().Z > 8000)
-	{
-		_owner->SetActorLocation(_respawn);
-		_owner->GetCharacterMovement()->Velocity = FVector(0.f);
-	}
+	_owner->SetActorLocation(_respawn);
+	_owner->GetCharacterMovement()->Velocity = FVector(0.f);
 }
 
 
-void UMyCharacterReplicatorComponent::SendMoveToServer_Implementation(const FCharacterMoveInfo& move)
-{
-	if (!_owner.IsValid() || !_actionComponent) return;
-	_actionComponent->SimulateMove(move);
+//void UMyCharacterReplicatorComponent::SendMoveToServer_Implementation(const FCharacterMoveInfo& move)
+//{
+//	if (!_owner.IsValid() || !_actionComponent) return;
+//	_actionComponent->SimulateMove(move);
+//
+//	_serverState._transform = _owner->GetActorTransform();
+//	_serverState._lastMove = move;
+//}
+//
+//void UMyCharacterReplicatorComponent::OnRep_ServerChange()
+//{
+//	if (!_owner.IsValid()) return;
+//
+//
+//	ClearUnacknowledgedMoves(_serverState._lastMove);
+//	for (const auto& move : _unacknowledgedMoves)
+//	{
+//		_actionComponent->ReplayMove(move);
+//	}
+//}
+//
+//void UMyCharacterReplicatorComponent::ClearUnacknowledgedMoves(const FCharacterMoveInfo& lastMove)
+//{
+//	
+//	TArray<FCharacterMoveInfo> moves;
+//	for (const auto& move : _unacknowledgedMoves)
+//	{
+//		if (move._timeStamp > lastMove._timeStamp)
+//		{
+//			moves.Add(move);
+//		}
+//	}
+//
+//	_unacknowledgedMoves = moves;
+//}
 
-	_serverState._transform = _owner->GetActorTransform();
-	_serverState._lastMove = move;
-}
 
-void UMyCharacterReplicatorComponent::OnRep_ServerChange()
-{
-	if (!_owner.IsValid()) return;
-
-
-	ClearUnacknowledgedMoves(_serverState._lastMove);
-	for (const auto& move : _unacknowledgedMoves)
-	{
-		_actionComponent->ReplayMove(move);
-	}
-}
-
-void UMyCharacterReplicatorComponent::ClearUnacknowledgedMoves(const FCharacterMoveInfo& lastMove)
-{
-	
-	TArray<FCharacterMoveInfo> moves;
-	for (const auto& move : _unacknowledgedMoves)
-	{
-		if (move._timeStamp > lastMove._timeStamp)
-		{
-			moves.Add(move);
-		}
-	}
-
-	_unacknowledgedMoves = moves;
-}
-
-
-void UMyCharacterReplicatorComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(UMyCharacterReplicatorComponent, _serverState)
-}
+//void UMyCharacterReplicatorComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+//{
+//	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+//
+//	DOREPLIFETIME(UMyCharacterReplicatorComponent, _serverState)
+//}
 
 

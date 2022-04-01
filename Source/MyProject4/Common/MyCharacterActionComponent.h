@@ -10,36 +10,35 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDelegateInteract,AActor*,DelegateCaller);
 
-
-USTRUCT()
-struct FCharacterMoveInfo
-{
-	GENERATED_USTRUCT_BODY()
-
-		UPROPERTY()
-		float _deltaTime;
-	UPROPERTY()
-		float _timeStamp;
-	UPROPERTY()
-		float _forwardInput;
-	UPROPERTY()
-		float _rotatingInput;
-	UPROPERTY()
-		float _rightInput;
-	UPROPERTY()
-		float _lookUpInput;
-	UPROPERTY()
-		bool _jumpInput;
-	UPROPERTY()
-		bool _interactInput;
-	UPROPERTY()
-		bool _attackInput;
-	UPROPERTY()
-		bool _greetInput;
-	UPROPERTY()
-		bool _rideInput;
-
-};
+//USTRUCT()
+//struct FCharacterMoveInfo
+//{
+//	GENERATED_USTRUCT_BODY()
+//
+//		UPROPERTY()
+//		float _deltaTime;
+//	UPROPERTY()
+//		float _timeStamp;
+//	UPROPERTY()
+//		float _forwardInput;
+//	UPROPERTY()
+//		float _rotatingInput;
+//	UPROPERTY()
+//		float _rightInput;
+//	UPROPERTY()
+//		float _lookUpInput;
+//	UPROPERTY()
+//		bool _jumpInput;
+//	UPROPERTY()
+//		bool _interactInput;
+//	UPROPERTY()
+//		bool _attackInput;
+//	UPROPERTY()
+//		bool _greetInput;
+//	UPROPERTY()
+//		bool _rideInput;
+//
+//};
 
 UCLASS(BlueprintType, Blueprintable)
 class MYPROJECT4_API UMyCharacterActionComponent : public UActorComponent
@@ -70,26 +69,36 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Event")
 		FDelegateInteract _interactDele;
 	
-	UFUNCTION(Server, Reliable)
-		void UseItem();
+	UFUNCTION(Server,Reliable)
+	void UseItem();
 
-	void SimulateMove(const FCharacterMoveInfo& MoveInfo);
+	//void SimulateMove(const FCharacterMoveInfo& MoveInfo);
 
-	void ReplayMove(const FCharacterMoveInfo& MoveInfo);
+	//void ReplayMove(const FCharacterMoveInfo& MoveInfo);
 
-	FCharacterMoveInfo CreateMove(const float& DeltaTime);
+	//FCharacterMoveInfo CreateMove(const float& DeltaTime);
 
 	
 
 
 private:
 
-	
 	void Interact(bool Input);
 
+	UFUNCTION(Server,Reliable)
+	void BurstInteract();
+
+	UFUNCTION(NetMulticast, Reliable)
+		void BurstInteract_Multi();
+
+
+	UFUNCTION(Server, Reliable)
 	void Attack(bool Input);
 
+	UFUNCTION(Server,Reliable)
 	void Greet(bool Input);
+
+
 
 	void AddMoveForward(const float& DeltaTime, const float& Input);
 
@@ -99,8 +108,7 @@ private:
 
 	void AddRotation(const float& DeltaTime, const float& Input);
 
-	void Jump(const bool& Input);
-
+	
 
 
 	void SetForwardInput(float value) { _forwardInput=value; }
@@ -130,5 +138,6 @@ private:
 	bool _greetInput;
 
 
-	TWeakObjectPtr<AMyCharacter> _owner;
+	UPROPERTY()
+	AMyCharacter* _owner;
 };

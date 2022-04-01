@@ -40,17 +40,15 @@ void AMyPlayerState::BeginPlay()
 			return;
 		}
 		character->SetColor(localInstance->_characterInfo._characterColor);
-		localInstance->BindAltF4(true);
-		localInstance->_migration._IsHost = false;
+		
+		if (!localInstance->_IsDedicatedServer)
+		{
+			localInstance->BindAltF4(true);
+			localInstance->_migration._IsHost = false;
+		}
 		NotifyConnection();
 		
 	}
-
-
-
-
-
-
 
 
 	UE_LOG(LogTemp, Warning, TEXT("state Okay"));
@@ -171,6 +169,7 @@ void AMyPlayerState::SaveBeforeExit_Implementation()
 	_saveGameInstance->Save(GetWorld());
 	UE_LOG(LogTemp, Warning, TEXT("SaveBeforeExit Done"));
 }
+
 
 void AMyPlayerState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {

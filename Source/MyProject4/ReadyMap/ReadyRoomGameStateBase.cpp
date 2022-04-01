@@ -62,19 +62,24 @@ void AReadyRoomGameStateBase::FindAllPlayerControllerOpenAllWidget_Implementatio
 	for (auto playerController : OutActors)
 	{
 		AReadyRoomPlayerController* pc = Cast<AReadyRoomPlayerController>(playerController);
-		if (pc->_ReadyHUDOverlay)
+
+		if (GetWorld()->GetName().Equals("ReadyMap"))
 		{
-			pc->_ReadyHUDOverlay->SetVisibility(ESlateVisibility::Visible);
+			if (pc->_ReadyHUDOverlay)
+			{
+				pc->_ReadyHUDOverlay->SetVisibility(ESlateVisibility::Visible);
+			}
+			if (pc->_StartHUDOverlay)
+			{
+				pc->_StartHUDOverlay->SetVisibility(ESlateVisibility::Visible);
+			}
 		}
+
 		if (pc->_ChattingHUDOverlay)
 		{
 			pc->_ChattingHUDOverlay->SetVisibility(ESlateVisibility::Visible);
 		}
-
-		if (pc->_StartHUDOverlay)
-		{
-			pc->_StartHUDOverlay->SetVisibility(ESlateVisibility::Visible);
-		}
+		
 	}
 	OpenAllWidget();
 }
@@ -84,19 +89,25 @@ void AReadyRoomGameStateBase::OpenAllWidget_Implementation()
 {
 	APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	AReadyRoomPlayerController* pc = Cast<AReadyRoomPlayerController>(playerController);
-	if (pc->_ReadyHUDOverlay)
+	
+
+	if (GetWorld()->GetName().Contains("Ready"))
 	{
-		pc->_ReadyHUDOverlay->SetVisibility(ESlateVisibility::Visible);
+		if (pc->_ReadyHUDOverlay)
+		{
+			pc->_ReadyHUDOverlay->SetVisibility(ESlateVisibility::Visible);
+		}
+		if (pc->_StartHUDOverlay)
+		{
+			pc->_StartHUDOverlay->SetVisibility(ESlateVisibility::Visible);
+		}
 	}
+
 	if (pc->_ChattingHUDOverlay)
 	{
 		pc->_ChattingHUDOverlay->SetVisibility(ESlateVisibility::Visible);
 	}
-	if (pc->_StartHUDOverlay)
-	{
-		pc->_StartHUDOverlay->SetVisibility(ESlateVisibility::Visible);
-	}
-
+	
 	
 }
 

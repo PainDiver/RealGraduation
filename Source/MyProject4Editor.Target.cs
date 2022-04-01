@@ -10,5 +10,8 @@ public class MyProject4EditorTarget : TargetRules
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.AddRange( new string[] { "MyProject4" } );
+		bUsesSteam = true;
+
+
 	}
 }

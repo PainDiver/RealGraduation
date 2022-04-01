@@ -86,12 +86,12 @@ void AMyCharacter::BeginPlay()
 	{
 		DisableInput(controller);
 	}
-	if (HasAuthority())
+	if (IsLocallyControlled())
 	{
 		SpawnDefaultWeapon();
 	}
 	
-	if (IsLocallyControlled())
+	if (IsLocallyControlled()) // use only for listen server host migration
 	{
 		//UGameplayStatics::DeleteGameInSlot(HOST_MIGRATION, 0);
 		_saveGame = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(HOST_MIGRATION, 0));
@@ -128,20 +128,23 @@ void AMyCharacter::Tick(float DeltaTime)
 		return;
 	}
 
-	FCharacterMoveInfo move = _actionComponent->CreateMove(DeltaTime);
-	if (GetLocalRole() == ROLE_AutonomousProxy)
-	{
-		_replicatorComponent->EnqueueAcknowledgedMove(move);
-		_replicatorComponent->SendMoveToServer(move);
-	}
+	//FCharacterMoveInfo move = _actionComponent->CreateMove(DeltaTime);
+	//if (GetLocalRole() == ROLE_AutonomousProxy)
+	//{
+	//	_replicatorComponent->EnqueueAcknowledgedMove(move);
+	//	_replicatorComponent->SendMoveToServer(move);
+	//}
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		_replicatorComponent->RespawnCheck();
+		if (GetActorLocation().Z < -2000 || GetActorLocation().Z > 8000)
+		{
+			_replicatorComponent->Respawn();
+		}
 	}
-	if (IsLocallyControlled())
-	{
-		_actionComponent->SimulateMove(move);
-	}
+	//if (IsLocallyControlled())
+	//{
+	//	_actionComponent->SimulateMove(move);
+	//}
 	
 }
 
@@ -150,7 +153,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMyCharacter::JumpCharacter);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	PlayerInputComponent->BindAction("showCursor", IE_Released, this, &AMyCharacter::ShowCursor);
@@ -215,67 +218,66 @@ void AMyCharacter::SetColor_Multi_Implementation(const FLinearColor& color)
 
 void AMyCharacter::MoveForward(float value)
 {
-	if (_actionComponent)
-	{
-		_actionComponent->SetForwardInput(value);
-	}
+	_actionComponent->AddMoveForward(0,value);
+	//if (_actionComponent)
+	//{
+	//	_actionComponent->SetForwardInput(value);
+	//}
 }
 
 void AMyCharacter::MoveRight(float value)
 {
-	if (_actionComponent)
-	{
-		_actionComponent->SetRightInput(value);
-	}
+	_actionComponent->AddMoveRight(0, value);
+	//if (_actionComponent)
+	//{
+	//	_actionComponent->SetRightInput(value);
+	//}
 }
 
 
 void AMyCharacter::LookUp(float value)
 {
-	if (_actionComponent)
-	{
-		_actionComponent->SetLookUpInput(value);
-	}
+	_actionComponent->AddLookUp(0, value);
+	//if (_actionComponent)
+	//{
+	//	_actionComponent->SetLookUpInput(value);
+	//}
 }
 
 void AMyCharacter::Turn(float value)
 {
-	if (_actionComponent)
-	{
-		_actionComponent->SetRotatingInput(value);
-	}
-}
-
-void AMyCharacter::JumpCharacter()
-{
-	if (_actionComponent)
-	{
-		_actionComponent->SetJumpInput(true);
-	}
+	_actionComponent->AddRotation(0, value);
+	//if (_actionComponent)
+	//{
+	//	_actionComponent->SetRotatingInput(value);
+	//}
 }
 
 void AMyCharacter::Interact()
 {
-	if (_actionComponent)
-	{
-		_actionComponent->SetInteractInput(true);
-	}
+	_actionComponent->Interact(true);
+	//if (_actionComponent)
+	//{
+	//	_actionComponent->SetInteractInput(true);
+	//}
 }
 
 void AMyCharacter::Attack()
 {
-	if (_actionComponent)
-	{
-		_actionComponent->SetAttackInput(true);
-	}
+	_actionComponent->Attack(true);
+	//if (_actionComponent)
+	//{
+	//	_actionComponent->SetAttackInput(true);
+	//}
 }
 
 void AMyCharacter::Greet()
 {
-	if (_actionComponent)
-	{
-		_actionComponent->SetGreetInput(true);
-	}
+	_actionComponent->Greet(true);
+	//if (_actionComponent)
+	//{
+	//	_actionComponent->SetGreetInput(true);
+	//}
 }
 
 
@@ -299,7 +301,6 @@ void AMyCharacter::ShowCursor()
 
 void AMyCharacter::FlyUp_AllMighty_Server_Implementation(float value)
 {
-	
 	FlyUp_AllMighty_Multi(value);
 }
 

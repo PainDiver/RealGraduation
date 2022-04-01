@@ -104,7 +104,7 @@ void AMyPickups::Activate_Implementation()
 	{
 		auto owner = GetOwner();
 		auto character = Cast<AMyCharacter>(owner);
-		auto newLocation = character->GetActorLocation()+FVector(0,0,-25) + character->GetActorForwardVector()*100;
+		auto newLocation = character->GetActorLocation()+FVector(0,0,0) + character->GetActorForwardVector()*100;
 		auto newRotation = character->_camera->GetForwardVector().Rotation();
 		
 		AActor* projectile;

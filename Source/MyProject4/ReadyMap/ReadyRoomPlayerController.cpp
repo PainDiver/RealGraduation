@@ -14,7 +14,7 @@
 #include "GameFramework/Character.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "../Common/MyCharacter.h"
-
+#include "../PlayMap/MyPlayerState.h"
 
 AReadyRoomPlayerController::AReadyRoomPlayerController()
 {
@@ -83,10 +83,13 @@ void AReadyRoomPlayerController::commit_Implementation(const FString& message)
 
 	GetWorldTimerManager().SetTimer(_timerHandle, FTimerDelegate::CreateLambda([&]()
 		{
-			_chattingPannel->GetCachedWidget()->SetRenderOpacity(_chattingPannel->GetCachedWidget()->GetRenderOpacity() - 0.05);
-			if (_chattingPannel->GetCachedWidget()->GetRenderOpacity() < 0)
+			if (_chattingPannel)
 			{
-				GetWorldTimerManager().ClearTimer(_timerHandle);
+				_chattingPannel->GetCachedWidget()->SetRenderOpacity(_chattingPannel->GetCachedWidget()->GetRenderOpacity() - 0.05);
+				if (_chattingPannel->GetCachedWidget()->GetRenderOpacity() < 0)
+				{
+					GetWorldTimerManager().ClearTimer(_timerHandle);
+				}
 			}
 		}), 0.3, true, 0.3);
 }
@@ -160,18 +163,21 @@ void AReadyRoomPlayerController::Initialize()
 			if (mapSelection)
 			{
 				mapSelection->SetVisibility(ESlateVisibility::Visible);
-				mapSelection->AddToViewport();
+				mapSelection->AddToViewport(1);
 			}
 		}
 	}
 
-	if (_gameInstance->_readyHUDAsset)
+	if (GetWorld()->GetName().Equals("ReadyMap"))
 	{
-		if (!_ReadyHUDOverlay)
+		if (_gameInstance->_readyHUDAsset)
 		{
-			_ReadyHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_readyHUDAsset);
-			_ReadyHUDOverlay->SetVisibility(ESlateVisibility::Visible);
-			_ReadyHUDOverlay->AddToViewport();
+			if (!_ReadyHUDOverlay)
+			{
+				_ReadyHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_readyHUDAsset);
+				_ReadyHUDOverlay->SetVisibility(ESlateVisibility::Visible);
+				_ReadyHUDOverlay->AddToViewport();
+			}
 		}
 	}
 

@@ -102,7 +102,7 @@ void AMyScoreMapPlayerController::DrawFromServerInstance_Implementation()
 {
 	for (auto info : Cast<UMyGameInstance>(GetGameInstance())->_winner)
 	{
-		DrawWinners(info._number,info._CharacterName,info._characterColor);
+		DrawWinners(info._rank,info._CharacterName,info._characterColor);
 	}
 
 }

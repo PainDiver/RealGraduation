@@ -16,9 +16,11 @@
 #include "GameFramework/Character.h"
 #include "MySaveGame.h"
 #include "SocketSubsystem.h"
-
+#include "GenericPlatform/GenericPlatformMisc.h"
+#include "JsonObjectConverter.h"
 
 #include "GenericPlatform/GenericPlatformProcess.h"
+
 
 
 const uint8 UMyGameInstance::MAX_PLAYER = 8;
@@ -27,11 +29,13 @@ const FName UMyGameInstance::SESSION_NAME = TEXT("TwistRunGame");
 
 void UMyGameInstance::Init()
 {
+	_bIsMasterServer = false;
+
 	if (Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(HOST_MIGRATION, 0)))
 	{
 		UGameplayStatics::DeleteGameInSlot(HOST_MIGRATION, 0);
 	}
-
+	
 
 	IOnlineSubsystem* subsystem = IOnlineSubsystem::Get();
 	if (subsystem != nullptr)
@@ -51,6 +55,10 @@ void UMyGameInstance::Init()
 	{
 		GEngine->OnNetworkFailure().AddUObject(this, &UMyGameInstance::OnNetworkFailure);
 	}
+
+
+	_http = &FHttpModule::Get();
+
 }
 
 void UMyGameInstance::Host(const bool& LanCheck)
@@ -75,6 +83,8 @@ void UMyGameInstance::Host(const bool& LanCheck)
 
 void UMyGameInstance::CreateSession()
 {
+	
+
 	if (_sessionInterface.IsValid())
 	{
 		if (!_lastSettings.IsValid())
@@ -91,8 +101,18 @@ void UMyGameInstance::CreateSession()
 			_lastSettings->Settings.Emplace(SESSION_NAME);
 			_lastSettings->bUsesStats = true;
 
+			//_lastSettings->NumPublicConnections = MAX_PLAYER;
+			//_lastSettings->bIsLANMatch = false;       // If you want a lan match set this to true.
+			//_lastSettings->bUsesPresence = false;    // Dedicated servers should always have this value set to false.
+			//_lastSettings->bShouldAdvertise = true;
+			//_lastSettings->bIsDedicated = true;
+			//_lastSettings->Settings.Emplace(SESSION_NAME);
+			//_lastSettings->BuildUniqueId = 1;
+			//_lastSettings->bAllowInvites = true;
+
 			_lastSettings->Set(SETTING_MAPNAME, SESSION_NAME.ToString(), EOnlineDataAdvertisementType::ViaOnlineService);
 		}
+		_IsDedicatedServer = false;
 		_currentSessionName = SESSION_NAME;
 		_sessionInterface->CreateSession(0, SESSION_NAME, *(_lastSettings));	
 	
@@ -134,7 +154,9 @@ void UMyGameInstance::Find()
 	{
 		_sessionSearch->MaxSearchResults = 100;
 		_sessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+		//_sessionSearch->QuerySettings.Set(SEARCH_DEDICATED_ONLY, true, EOnlineComparisonOp::Equals);
 		_sessionSearch->bIsLanQuery = _lanCheck;
+		
 
 		_sessionInterface->FindSessions(0, _sessionSearch.ToSharedRef());	
 		UE_LOG(LogTemp, Warning, TEXT("Session Searched"));
@@ -181,9 +203,11 @@ void UMyGameInstance::OnCreateSessionComplete(FName sessionName, bool success)
 	UWorld* world = GetWorld();
 
 	UWidgetLayoutLibrary::RemoveAllWidgets(GetWorld());
-	world->ServerTravel("/Game/map/ReadyMap?listen");
+	
+	//world->ServerTravel("/Game/map/ReadyMap");
 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "Server Travel");
-	CheckOpenPublicConnection(true);
+	//CheckOpenPublicConnection(true);
+	
 }
 
 void UMyGameInstance::OnDestroySessionComplete(FName sessionName, bool success)
@@ -203,12 +227,10 @@ void UMyGameInstance::OnDestroySessionComplete(FName sessionName, bool success)
 
 void UMyGameInstance::OnNetworkFailure(UWorld* world, UNetDriver* netDriver, ENetworkFailure::Type failureType, const FString& error)
 {
+
 	BindAltF4(false);
 	
-
 	auto existingSession = _sessionInterface->GetNamedSession(SESSION_NAME);
-	
-
 	
 	if (existingSession != nullptr && _sessionInterface)
 	{
@@ -238,14 +260,17 @@ void UMyGameInstance::OnNetworkFailure(UWorld* world, UNetDriver* netDriver, ENe
 
 void UMyGameInstance::OnFindSessionComplete(bool success)
 {
-	if (success &&_sessionSearch.IsValid())
+	if (success)
 	{
-		for (const FOnlineSessionSearchResult& searchResult: _sessionSearch->SearchResults)
+		_IsDedicatedServer = false;
+		if (success && _sessionSearch.IsValid())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("found : %s"), *searchResult.GetSessionIdStr());
+			for (const FOnlineSessionSearchResult& searchResult : _sessionSearch->SearchResults)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("found : %s"), *searchResult.GetSessionIdStr());
+			}
 		}
 	}
-
 }
 
 void UMyGameInstance::OnJoinSessionComplete(FName sessionName, EOnJoinSessionCompleteResult::Type result)
@@ -255,7 +280,7 @@ void UMyGameInstance::OnJoinSessionComplete(FName sessionName, EOnJoinSessionCom
 	//SteamUser()->GetSteamID(), SessionInfo->SteamP2PAddr->GetPort();
 	//SessionInfo->HostAddr, SessionInfo->HostAddr->GetPort();
 
-
+	_IsDedicatedServer = false;
 	FString address;
 	if(!_sessionInterface->GetResolvedConnectString(sessionName, address))
 	{
@@ -557,23 +582,543 @@ FString UMyGameInstance::GetMyIpAddress()
 }
 
 
-int UMyGameInstance::CreateNewProcess(FString url, FString Attributes)
+void UMyGameInstance::CreateDedicatedServers(FString url)
 {
 	static int port = GetWorld()->URL.Port;
+	static int queryPort = 27015;
 	static int childPort = port;
 
+	FString dir = FPaths::ProjectDir();
+	
+	//FString ExecuterPathDebug = FPaths::ConvertRelativePathToFull(dir) + "Saved/StagedBuilds/WindowsServer/MyProject4Server";
+	FString ExecuterPathDebug = FPaths::EngineDir() + "/Binaries/Win64/UE4Editor";
 
-	FString ExecuterPath = FPaths::ProjectDir()+"Saved\\StagedBuilds\\WindowsNoEditor\\MyProject4.exe";
 
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *ExecuterPath);
+	FString ExecuterPathRelease = dir + "../MyProject4Server";
+	
+	if (!url.IsEmpty())
+	{
+		ExecuterPathDebug = url;
+		ExecuterPathRelease = url;
+	}
+
 
 	uint32 OutProcessID = 0;
-
-	FProcHandle ProcHandle = FPlatformProcess::CreateProc(*ExecuterPath, *Attributes, true, false, false, &OutProcessID, 0, nullptr,nullptr);	
-	
+	queryPort++;
 	childPort++;
-	_childProcesses.Add({ ProcHandle, childPort });
 
-	return ProcHandle.IsValid() ? OutProcessID : -1;
+	FString Attribute = "-log -Port=" + FString::FromInt(childPort) + " -QueryPort=" + FString::FromInt(queryPort);
+	FProcHandle ProcHandle = FPlatformProcess::CreateProc(*ExecuterPathRelease, *Attribute, true, false, false, &OutProcessID, 0, nullptr, nullptr);
+	if (ProcHandle.IsValid())
+	{
+		_childProcess.Add(ProcHandle);
+	}
+	Attribute = "C:\\Users\\hyo29\\Desktop\\FirstStep\\GradProj\\MyProject4.uproject -log -server -SteamServerName = TwistRun -Port=" +FString::FromInt(childPort) +  "-QueryPort = "  + FString::FromInt(queryPort);
+	ProcHandle = FPlatformProcess::CreateProc(*ExecuterPathDebug, *Attribute, true, false, false, &OutProcessID, 0, nullptr, nullptr);
+	if (ProcHandle.IsValid())
+	{
+		_childProcess.Add(ProcHandle);
+	}
+	
+	
 }
 
+void UMyGameInstance::InitializeBranch(const FString& WebServerIP)
+{
+	auto request = _http->CreateRequest();
+
+	request->OnProcessRequestComplete().BindUObject(this, &UMyGameInstance::OnBranchProcessComplete);
+	
+	if (WebServerIP.IsEmpty())
+	{
+		request->SetURL("http://115.21.133.38:8335/api/Host");
+		_webServerIP = "http://115.21.133.38:8335/";
+	}
+	else
+	{
+		request->SetURL(WebServerIP+"api/Host");
+		_webServerIP = WebServerIP;
+	}
+	
+	request->SetVerb("GET");
+	request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+
+	request->ProcessRequest();
+}
+
+void UMyGameInstance::WriteMasterServerInfo(const FString& masterServerSteamIP)
+{
+	
+	TSharedPtr<FJsonObject> jsonObject = MakeShareable(new FJsonObject);
+	
+	jsonObject->SetNumberField("ServerID", 0);
+	jsonObject->SetStringField("IPAddress", masterServerSteamIP);
+	jsonObject->SetStringField("ServerName", "Test Server Name");
+	jsonObject->SetStringField("MapName", "Test Map name");
+	jsonObject->SetNumberField("CurrentPlayers", 0);
+	jsonObject->SetNumberField("MaxPlayers", 1000);
+
+
+	FString jsonString;
+	TSharedRef<TJsonWriter<TCHAR>> jsonWriter = TJsonWriterFactory<>::Create(&jsonString);
+	
+	auto request = _http->CreateRequest();
+
+	FJsonSerializer::Serialize(jsonObject.ToSharedRef(), jsonWriter);
+
+	request->OnProcessRequestComplete().BindUObject(this, &UMyGameInstance::OnWriteProcessRequestComplete);
+	request->SetURL(_webServerIP+"api/Host");
+	request->SetVerb("POST");
+	request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+
+	request->SetContentAsString(jsonString);
+	request->ProcessRequest();
+}
+
+void UMyGameInstance::WriteDedicatedServerInfo(const FString& masterServerSteamIP)
+{
+	TSharedPtr<FJsonObject> jsonObject = MakeShareable(new FJsonObject);
+
+	jsonObject->SetNumberField("ServerID", 0);
+	jsonObject->SetStringField("IPAddress", masterServerSteamIP+":"+FString::FromInt(GetWorld()->URL.Port));
+	UE_LOG(LogTemp, Warning, TEXT("ip:%s"),*(masterServerSteamIP + ":" + FString::FromInt(GetWorld()->URL.Port)));
+	jsonObject->SetStringField("ServerName", "Test Server Name");
+	jsonObject->SetStringField("MapName", GetWorld()->GetName());
+	jsonObject->SetNumberField("CurrentPlayers", 0);
+	jsonObject->SetNumberField("MaxPlayers", 8);
+	jsonObject->SetBoolField("IsStarted", false);
+
+
+	FString jsonString;
+	TSharedRef<TJsonWriter<TCHAR>> jsonWriter = TJsonWriterFactory<>::Create(&jsonString);
+
+	auto request = _http->CreateRequest();
+
+	FJsonSerializer::Serialize(jsonObject.ToSharedRef(), jsonWriter);
+
+	request->OnProcessRequestComplete().BindUObject(this, &UMyGameInstance::OnWriteProcessRequestComplete);
+	request->SetURL(_webServerIP+"api/Host");
+	request->SetVerb("PUT");
+	request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+
+	request->SetContentAsString(jsonString);
+	
+	request->ProcessRequest();
+}
+
+void UMyGameInstance::ReadMasterServerInfo(const FString& webServerIP)
+{
+	if (_lanCheck)
+	{
+		return;
+	}
+
+	auto request = _http->CreateRequest();
+
+	request->OnProcessRequestComplete().BindUObject(this, &UMyGameInstance::OnReadProcessRequestComplete);
+	
+	request->SetURL(webServerIP + "api/Host");
+	request->SetVerb("GET");
+	request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+
+	request->ProcessRequest();
+}
+
+
+void UMyGameInstance::ReadAllDedicatedServerInfo()
+{
+	auto request = _http->CreateRequest();
+	request->OnProcessRequestComplete().BindUObject(this, &UMyGameInstance::OnDediReadProcessRequestComplete);
+	request->SetURL(_webServerIP+"api/Host/5");
+	request->SetVerb("GET");
+	request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+
+	request->ProcessRequest();
+}
+
+void UMyGameInstance::LinkMasterServerInfo(bool enter)
+{
+	TSharedPtr<FJsonObject> jsonObject = MakeShareable(new FJsonObject);
+	jsonObject->SetStringField("IPAddress", " ");
+	jsonObject->SetNumberField("Enter", enter?1:-1);
+	FString jsonString;
+	TSharedRef<TJsonWriter<TCHAR>> jsonWriter = TJsonWriterFactory<>::Create(&jsonString);
+	FJsonSerializer::Serialize(jsonObject.ToSharedRef(), jsonWriter);
+
+
+	auto request = _http->CreateRequest();
+	request->SetURL(_webServerIP+"api/Values");
+	request->SetVerb("POST");
+	request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+	request->SetContentAsString(jsonString);
+
+	request->ProcessRequest();
+}
+
+void UMyGameInstance::LinkDedicatedServerInfo(const FString& steamSessionID,bool enter)
+{
+	TSharedPtr<FJsonObject> jsonObject = MakeShareable(new FJsonObject);
+	jsonObject->SetStringField("IPAddress",steamSessionID+":"+ FString::FromInt(GetWorld()->URL.Port));
+	jsonObject->SetNumberField("Enter", enter ? 1 : -1);
+	FString jsonString;
+	TSharedRef<TJsonWriter<TCHAR>> jsonWriter = TJsonWriterFactory<>::Create(&jsonString);
+	FJsonSerializer::Serialize(jsonObject.ToSharedRef(), jsonWriter);
+
+	auto request = _http->CreateRequest();
+	request->SetURL(_webServerIP+"api/Values");
+	request->SetVerb("PUT");
+	request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+	request->SetContentAsString(jsonString);
+
+	request->ProcessRequest();
+}
+
+
+void UMyGameInstance::LogOutMasterServer()
+{
+	auto request = _http->CreateRequest();
+	request->SetURL(_webServerIP+"api/Host");
+	request->SetVerb("DELETE");
+	request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+
+	request->ProcessRequest();
+}
+
+void UMyGameInstance::LogOutDediServer(const FString& currentSessionIP)
+{	
+	auto request = _http->CreateRequest();
+
+	int port = GetWorld()->URL.Port;
+	TSharedPtr<FJsonObject> jsonObject = MakeShareable(new FJsonObject);
+	FString IP = currentSessionIP + ":" + FString::FromInt(port);
+	jsonObject->SetStringField("IPAddress", IP);
+	jsonObject->SetBoolField("Start", false);
+	FString jsonString;
+	TSharedRef<TJsonWriter<TCHAR>> jsonWriter = TJsonWriterFactory<>::Create(&jsonString);
+	FJsonSerializer::Serialize(jsonObject.ToSharedRef(), jsonWriter);
+
+	UE_LOG(LogTemp, Warning, TEXT("Sent:%s"),*jsonString);
+
+	//{"Address" : "~~"} -> {"Address" = "~~"}
+
+	request->SetURL(_webServerIP+"api/Values");
+	request->SetVerb("DELETE");
+	request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+	request->SetContentAsString(jsonString);
+
+	request->ProcessRequest();
+}
+
+
+
+
+
+
+void UMyGameInstance::OnWriteProcessRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool success)
+{
+	if (success)
+	{
+		_IsDedicatedServer = true;
+		UE_LOG(LogTemp, Warning, TEXT("Http Request Result:%s"),*response->GetContentAsString());
+	}
+	else
+	{
+
+	}
+}
+
+
+void UMyGameInstance::OnReadProcessRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool success)
+{
+	static int limit = 4;
+	if (success)
+	{
+		FString masterServerInfo = response->GetContentAsString();
+		masterServerInfo.InsertAt(0, FString("{\"Response\":"));
+		masterServerInfo.AppendChar('}');
+		//UE_LOG(LogTemp, Warning, TEXT("Response %s"), *masterServerInfo);
+
+
+		TSharedPtr<FJsonObject> jsonObject = MakeShareable(new FJsonObject);
+		TSharedRef<TJsonReader<TCHAR>> jsonReader = TJsonReaderFactory<>::Create(masterServerInfo);
+
+		if (FJsonSerializer::Deserialize(jsonReader,jsonObject) && jsonObject.IsValid())
+		{
+			TArray<TSharedPtr<FJsonValue>> jsonValue = jsonObject->GetArrayField(TEXT("Response"));
+			
+			FMasterServerData serverData = FMasterServerData();
+			jsonObject = jsonValue.Pop()->AsObject();
+
+			serverData._serverID = jsonObject->GetIntegerField("ServerID");
+			serverData._serverName = jsonObject->GetStringField("ServerName");
+			serverData._mapName = jsonObject->GetStringField("MapName");
+			serverData._IPAddress = jsonObject->GetStringField("IPAddress");
+			serverData._currentPlayers = jsonObject->GetIntegerField("CurrentPlayers");
+			serverData._maxPlayers = jsonObject->GetIntegerField("MaxPlayers");
+			
+
+			//UE_LOG(LogTemp, Warning, TEXT("ServerID:%d"), serverData._serverID);
+			//UE_LOG(LogTemp, Warning, TEXT("SteamIP:%s"), *serverData._IPAddress);
+			//UE_LOG(LogTemp, Warning, TEXT("ServerName:%s"), *serverData._serverName);
+			//UE_LOG(LogTemp, Warning, TEXT("MapName:%s"), *serverData._mapName);
+			//UE_LOG(LogTemp, Warning, TEXT("CurrentPlayers:%d"), serverData._currentPlayers);
+			//UE_LOG(LogTemp, Warning, TEXT("MaxPlayers:%d"), serverData._maxPlayers);
+		
+			_masterServerAddress = serverData._IPAddress;
+			FString url = "steam." + _masterServerAddress;
+			UGameplayStatics::OpenLevel(GetWorld(),FName(url));
+		}
+	}
+	else
+	{
+		limit--;
+		if (limit == 3)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
+			ReadMasterServerInfo("http://172.30.1.43:8335/"); // My Lan IP
+		}
+		else if (limit == 2)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
+			ReadMasterServerInfo("https://localhost:44333/"); // My Lan IP
+		}
+		else if (limit == 1)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
+			ReadMasterServerInfo("https://127.0.0.1:44333/"); // My Lan IP
+		}
+		else
+		{
+			_lanCheck = true;
+		}
+	}
+
+
+
+}
+
+void UMyGameInstance::OnBranchProcessComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool success)
+{
+	static int limit = 4;
+
+	if (success)
+	{
+		FString masterServerInfo = response->GetContentAsString();
+		masterServerInfo.InsertAt(0, FString("{\"Response\":"));
+		masterServerInfo.AppendChar('}');
+		UE_LOG(LogTemp, Warning, TEXT("Response %s"), *masterServerInfo);
+
+		TSharedPtr<FJsonObject> jsonObject = MakeShareable(new FJsonObject);
+		TSharedRef<TJsonReader<TCHAR>> jsonReader = TJsonReaderFactory<>::Create(masterServerInfo);
+
+		if (masterServerInfo.Len()>20)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ServerID exists, this server will be dedicated server"));
+			_bIsMasterServer = false;
+			if (FJsonSerializer::Deserialize(jsonReader, jsonObject) && jsonObject.IsValid())
+			{
+				TArray<TSharedPtr<FJsonValue>> jsonValue = jsonObject->GetArrayField(TEXT("Response"));
+				FMasterServerData serverData = FMasterServerData();
+				jsonObject = jsonValue.Pop()->AsObject();
+				serverData._IPAddress = jsonObject->GetStringField("IPAddress");
+				UE_LOG(LogTemp, Warning, TEXT("SteamIP:%s"), *serverData._IPAddress);
+				_masterServerAddress = serverData._IPAddress;
+			}
+
+			//GetWorld()->ServerTravel("/Game/map/ReadyMap",true);
+		}
+		else
+		{
+			FCoreDelegates::OnEnginePreExit.AddLambda([&]()
+				{
+					LogOutMasterServer();
+					ExitAllServer();
+				});
+			_bIsMasterServer = true;
+			UE_LOG(LogTemp, Warning, TEXT("this server will be master server"));
+		}
+	}
+	else
+	{
+		limit--;
+		if (limit == 3)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
+			InitializeBranch("http://172.30.1.43:8335/"); // My Lan IP
+		}
+		else if (limit == 2)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
+			InitializeBranch("https://localhost:44333/"); // My Lan IP
+		}
+		else if (limit == 1)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
+			InitializeBranch("https://127.0.0.1:44333/"); // My Lan IP
+		}
+		else
+		{
+			_lanCheck = true;
+		}
+	}
+}
+
+
+void UMyGameInstance::OnDediReadProcessRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool success)
+{
+	
+	if (success)
+	{
+		FString masterServerInfo = response->GetContentAsString();
+		masterServerInfo.InsertAt(0, FString("{\"Response\":"));
+		masterServerInfo.AppendChar('}');
+
+		TSharedPtr<FJsonObject> jsonObject = MakeShareable(new FJsonObject);
+		TSharedRef<TJsonReader<TCHAR>> jsonReader = TJsonReaderFactory<>::Create(masterServerInfo);
+
+		if (FJsonSerializer::Deserialize(jsonReader, jsonObject) && jsonObject.IsValid())
+		{
+			_waikikiDediServers.Empty();
+			_spaceStationDediServers.Empty();
+			TArray<TSharedPtr<FJsonValue>> jsonValue = jsonObject->GetArrayField(TEXT("Response"));
+			
+			for (auto value : jsonValue)
+			{
+				FDediServerData serverData = FDediServerData();
+				auto jsonObj = value->AsObject();
+				if (FJsonObjectConverter::JsonObjectToUStruct(jsonObj.ToSharedRef(), &serverData, 0, 0))
+				{
+					serverData._serverID = jsonObj->GetIntegerField("ServerID");
+					serverData._serverName = jsonObj->GetStringField("ServerName");
+					serverData._mapName = jsonObj->GetStringField("MapName");
+					serverData._IPAddress = jsonObj->GetStringField("IPAddress");
+					serverData._currentPlayers = jsonObj->GetIntegerField("CurrentPlayers");
+					serverData._maxPlayers = jsonObj->GetIntegerField("MaxPlayers");
+					serverData._bIsStarted = jsonObj->GetBoolField("IsStarted");
+
+					if (serverData._mapName.Equals("ReadyMap"))
+					{
+						_waikikiDediServers.Emplace(serverData);
+						
+					}
+					else if (serverData._mapName.Equals("SpaceStationReadyMap"))
+					{
+						_spaceStationDediServers.Emplace(serverData);
+					}
+
+					_IsDedicatedServer = true;
+				}
+			}
+		}
+		for (auto server : _waikikiDediServers)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("enterable waikiki servers: %s"), *server._IPAddress);
+		}
+		for (auto server : _spaceStationDediServers)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("enterable SpaceStation servers: %s"), *server._IPAddress);
+		}
+
+	}
+	else
+	{
+
+	}
+}
+
+void UMyGameInstance::UpdateDedicatedServerState(const FString& steamSessionID, bool started)
+{
+	TSharedPtr<FJsonObject> jsonObject = MakeShareable(new FJsonObject);
+	jsonObject->SetStringField("IPAddress", steamSessionID + ":"+FString::FromInt(GetWorld()->URL.Port));
+	jsonObject->SetNumberField("Start", started);
+	FString jsonString;
+	TSharedRef<TJsonWriter<TCHAR>> jsonWriter = TJsonWriterFactory<>::Create(&jsonString);
+	FJsonSerializer::Serialize(jsonObject.ToSharedRef(), jsonWriter);
+
+	auto request = _http->CreateRequest();
+	request->SetURL(_webServerIP+"api/GamePlay");
+	request->SetVerb("POST");
+	request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+	request->SetContentAsString(jsonString);
+
+	request->ProcessRequest();
+}
+
+const FString UMyGameInstance::GetBiggestServer(TArray<FDediServerData> container)
+{
+	TArray<FDediServerData> servers;
+	for (auto server : container)
+	{
+		if (!server._bIsStarted && server._currentPlayers<8)
+		{
+			servers.Emplace(server);
+			UE_LOG(LogTemp, Warning, TEXT("servers:%s is in server queue"),*server._IPAddress);
+		}
+	}
+
+	FDediServerData biggest = FDediServerData();
+	biggest._currentPlayers = -1;
+	biggest._IPAddress = "Default";
+	for (auto server : servers)
+	{
+		if (server._currentPlayers > biggest._currentPlayers)
+		{
+			biggest._IPAddress = server._IPAddress;
+		}
+	}
+
+	return biggest._IPAddress;
+}
+
+const FString UMyGameInstance::GetEnterableWaikikiDediServer() 
+{
+	return GetBiggestServer(_waikikiDediServers);
+}
+
+const FString UMyGameInstance::GetEnterableSpacestationDediServer() 
+{
+	return GetBiggestServer(_spaceStationDediServers);
+}
+
+
+const FString UMyGameInstance::GetMasterServerAddress() const
+{
+	return _masterServerAddress;
+}
+
+void UMyGameInstance::ExitAllServer()
+{	
+	for (auto child : _childProcess)
+	{
+		FPlatformProcess::TerminateProc(child,true);
+		UE_LOG(LogTemp, Warning, TEXT("Kill all dedciated Server!"));
+	}
+
+}
+
+EMapSelection UMyGameInstance::BranchMap()
+{
+	
+	if ((GetWorld()->URL.Port) % 2 == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Branch to Waikiki"));
+		return EMapSelection::EMS_Waikiki;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Branch to SpaceStation"));
+		return EMapSelection::EMS_SpaceStation;
+	}
+
+}
+
+
+bool UMyGameInstance::DediCheck()
+{
+	return GetWorld()->GetNetMode() != ENetMode::NM_ListenServer;
+}
+
+void UMyGameInstance::RequestExit(bool force)
+{
+	FGenericPlatformMisc::RequestExit(force);
+}

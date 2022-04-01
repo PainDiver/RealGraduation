@@ -7,6 +7,9 @@
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSettings.h"
+#include "Http.h"
+#include "OnlineJSonSerializer.h"
+
 #include "MyGameInstance.generated.h"
 
 
@@ -20,16 +23,52 @@ enum class EMapSelection : uint8
 };
 
 
-USTRUCT(Atomic, BlueprintType)
-struct FChildProcesses
+
+USTRUCT(BlueprintType)
+struct FMasterServerData
 {
 	GENERATED_USTRUCT_BODY()
 
 public:
-	FProcHandle _childProcess;
-	int _portNumber;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int _serverID;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FString _IPAddress;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FString _serverName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FString _mapName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int _currentPlayers;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int _maxPlayers;
+
 };
 
+USTRUCT(BlueprintType)
+struct FDediServerData
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int _serverID;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FString _IPAddress;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FString _serverName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FString _mapName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int _currentPlayers;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int _maxPlayers;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool _bIsStarted;
+};
 
 USTRUCT(Atomic, BlueprintType)
 struct FMigrationPacket
@@ -61,13 +100,13 @@ struct FCharacterInfo
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FLinearColor _characterColor;
+		FLinearColor _characterColor = {1.0,1.0,1.0};
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString _CharacterName="DefaultPlayer";
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int _number =100;
+	int _rank =100;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool initialized = false;
@@ -139,6 +178,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 		TSubclassOf<class UUserWidget> _connectionUIHUDAsset;
+
+
+
 
 
 
@@ -236,9 +278,9 @@ public:
 
 
 	UFUNCTION(BlueprintCallable)
-	int CreateNewProcess(FString url, FString Attributes);
+	void CreateDedicatedServers(FString url);
 	
-	TArray<FChildProcesses> _childProcesses;
+	bool _IsDedicatedServer = false;
 
 private:
 	//callback for server hosting, joining, destroying
@@ -267,4 +309,94 @@ private:
 
 	FString _saveSlot;
 
+
+///////////////////////////////////////////////Master Server////////////////
+
+public:
+	
+	UFUNCTION(BlueprintCallable)
+	void InitializeBranch(const FString& WebServerIP="");
+	
+	UFUNCTION(BlueprintCallable)
+		EMapSelection BranchMap();
+
+	UFUNCTION(BlueprintCallable)
+		void RequestExit(bool force = false);
+
+
+	UFUNCTION(BlueprintCallable)
+	void WriteMasterServerInfo(const FString& maserServerSteamIP);
+
+	UFUNCTION(BlueprintCallable)
+	void WriteDedicatedServerInfo(const FString& maserServerSteamIP);
+
+
+	UFUNCTION(BlueprintCallable)
+	void ReadMasterServerInfo(const FString& webServerIP);
+
+	UFUNCTION(BlueprintCallable)
+	void ReadAllDedicatedServerInfo();
+
+
+	UFUNCTION(BlueprintCallable)
+		void LinkMasterServerInfo(bool enter);
+
+	UFUNCTION(BlueprintCallable)
+		void LinkDedicatedServerInfo(const FString& steamSessionID,bool enter);
+
+	UFUNCTION(BlueprintCallable)
+		void UpdateDedicatedServerState(const FString& steamSessionID, bool started);
+
+	const FString GetBiggestServer(TArray<FDediServerData> container);
+
+	UFUNCTION(BlueprintCallable)
+		const FString GetEnterableWaikikiDediServer();
+
+	UFUNCTION(BlueprintCallable)
+		const FString GetEnterableSpacestationDediServer();
+
+	UFUNCTION(BlueprintCallable)
+	void LogOutMasterServer();
+
+	UFUNCTION(BlueprintCallable)
+	void LogOutDediServer(const FString& currentSessionIP);
+
+	
+	void OnBranchProcessComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool success);
+
+	void OnWriteProcessRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool success);
+
+	void OnReadProcessRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool success);
+
+	void OnDediReadProcessRequestComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool success);
+
+	UFUNCTION(BlueprintCallable)
+	const FString GetMasterServerAddress()const;
+
+	UFUNCTION(BlueprintCallable)
+	void ExitAllServer();
+
+	UFUNCTION(BlueprintCallable)
+		bool DediCheck();
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool _bIsMasterServer;
+
+
+private:
+	UPROPERTY()
+	FString _webServerIP;
+
+	TArray<FProcHandle> _childProcess;
+
+	FHttpModule* _http;
+
+	UPROPERTY()
+	FString _masterServerAddress;
+
+	TArray<FDediServerData> _waikikiDediServers;
+
+	TArray<FDediServerData> _spaceStationDediServers;
 };
+

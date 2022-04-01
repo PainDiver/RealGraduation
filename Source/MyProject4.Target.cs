@@ -11,5 +11,11 @@ public class MyProject4Target : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.AddRange( new string[] { "MyProject4" } );
 		bUsesSteam = true;
+
+		GlobalDefinitions.Add("UE4_PRODUCT_STEAMGAMEDESC=\"Spacewar\"");
+		GlobalDefinitions.Add("UE4_PRODUCT_STEAMPRODUCTNAME=\"Spacewar\"");
+		GlobalDefinitions.Add("UE4_PRODUCT_STEAMGAMEDIR=\"Spacewar\"");
+
+		GlobalDefinitions.Add("UE4_PROJECT_STEAMSHIPPINGID=\"480\"");
 	}
 }
