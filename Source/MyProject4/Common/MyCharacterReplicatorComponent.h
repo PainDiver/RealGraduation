@@ -41,7 +41,7 @@ public:
 	//UFUNCTION(Server, Reliable)
 	//void SendMoveToServer(const FCharacterMoveInfo& move);
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(BlueprintCallable,Server, Reliable)
 		void Respawn();
 
 	//UFUNCTION()

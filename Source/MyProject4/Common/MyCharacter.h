@@ -24,6 +24,11 @@ public:
 
 	friend class UMyCharacterActionComponent;
 
+	friend class UMyReplicatorComponent;
+
+	friend class UMyCharacterParkourComponent;
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -37,6 +42,9 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
+	virtual void Landed(const FHitResult& Hit);
+
+	virtual void OnJumped();
 	//Initial Function
 	
 	UFUNCTION(Server,Reliable)
@@ -45,7 +53,7 @@ public:
 
 	//setter getter
 	UFUNCTION(BlueprintCallable)
-	void SetActionComponent(class UMyCharacterActionComponent* ac) {_actionComponent = ac;}
+	void SetActionComponent(UMyCharacterActionComponent* ac) {_actionComponent = ac;}
 	
 	UFUNCTION(BlueprintCallable)
 	inline UMyCharacterActionComponent* GetActionComponent() {return _actionComponent;}
@@ -61,6 +69,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		inline UMyCharacterReplicatorComponent* GetCharacterReplicatorComponent() { return _replicatorComponent; }
+
+	UFUNCTION(BlueprintCallable)
+		inline UMyCharacterParkourComponent* GetCharacterParkourComponent() { return _parkourComponent; }
+
 
 
 	UFUNCTION(BlueprintCallable)
@@ -104,27 +116,34 @@ public:
 
 	void AllMightyModeBinding();
 
-// public UPROPERTY
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAceess = "true"), Category = Camera)
-	class UCameraComponent* _camera;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Camera)
-	class USpringArmComponent* _springArm;
+// public UPROPERTY
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera)
+	UCameraComponent* _camera;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera)
+	USpringArmComponent* _springArm;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera)
+	UStaticMeshComponent* _glide;
 
 
 	UPROPERTY()
 	AMyPlayerState* _playerState;
 
+	UPROPERTY(VisibleAnyWhere,BlueprintReadWrite)
+		UMyCharacterParkourComponent* _parkourComponent;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnyWhere, BlueprintReadWrite)
 		UMyCharacterActionComponent* _actionComponent;
-	UPROPERTY()
-		class UMyCharacterReplicatorComponent* _replicatorComponent;
+	UPROPERTY(VisibleAnyWhere, BlueprintReadWrite)
+		UMyCharacterReplicatorComponent* _replicatorComponent;
 	UPROPERTY()
 		UCharacterMovementComponent* _characterMovementComponent;
 
-	UPROPERTY()
-		class UMySaveGame* _saveGame;
+
+	UPROPERTY(replicated, BlueprintReadWrite)
+		bool _parkourDelay;
 
 
 private:
@@ -149,6 +168,26 @@ private:
 
 	void ShowCursor();
 
+	void Jump();
+
+	void JumpRelease();
+
+	void Sprint();
+
+	void SprintRelease();
+
+	void Ledge();
+	
+	void UnLedge();
+
+
+	UFUNCTION(Server,Reliable)
+	void DelayParkour();
+
+	
+
+
+
 	//Initial Value
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Attack")
 	TSubclassOf<class AMyWeapon> _defaultWeaponClass;
@@ -162,6 +201,8 @@ private:
 	FTimerHandle _timerHandle;
 
 	AActor* _target;
+
+	
 
 	//Components
 };

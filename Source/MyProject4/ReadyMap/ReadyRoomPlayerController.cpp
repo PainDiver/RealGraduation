@@ -168,18 +168,17 @@ void AReadyRoomPlayerController::Initialize()
 		}
 	}
 
-	if (GetWorld()->GetName().Equals("ReadyMap"))
+	
+	if (_gameInstance->_readyHUDAsset)
 	{
-		if (_gameInstance->_readyHUDAsset)
+		if (!_ReadyHUDOverlay)
 		{
-			if (!_ReadyHUDOverlay)
-			{
-				_ReadyHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_readyHUDAsset);
-				_ReadyHUDOverlay->SetVisibility(ESlateVisibility::Visible);
-				_ReadyHUDOverlay->AddToViewport();
-			}
+			_ReadyHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_readyHUDAsset);
+			_ReadyHUDOverlay->SetVisibility(ESlateVisibility::Visible);
+			_ReadyHUDOverlay->AddToViewport();
 		}
 	}
+	
 
 	if (_gameInstance->_chattingHUDAsset)
 	{
@@ -202,7 +201,7 @@ void AReadyRoomPlayerController::Initialize()
 			{
 				_StartHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_startHUDAsset);
 				_StartHUDOverlay->SetVisibility(ESlateVisibility::Visible);
-				_StartHUDOverlay->AddToViewport();
+				_StartHUDOverlay->AddToViewport(100);
 			}
 		}
 

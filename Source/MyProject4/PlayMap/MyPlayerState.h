@@ -45,7 +45,7 @@ public:
 		bool _Initialized;
 
 
-	UPROPERTY(replicated)
+	UPROPERTY(replicated,BlueprintReadOnly)
 		bool _allMightyMode;
 
 

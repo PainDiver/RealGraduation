@@ -111,7 +111,7 @@ void AMyScoreMapPlayerController::DrawWinners_Implementation(const int& number,c
 {
 	UTextBlock* NewTextBlock = NewObject<UTextBlock>();
 	NewTextBlock->Font.Size = 25;
-	NewTextBlock->SetText(FText::FromString(FString::FromInt(number + 1) + FString("\t\t\t") + characterInfo));
+	NewTextBlock->SetText(FText::FromString(FString("\t")+FString::FromInt(number + 1) + FString("\t\t\t\t\t") + characterInfo));
 	if (_WinnerScrollBox)
 	{
 		_WinnerScrollBox->AddChild(NewTextBlock);

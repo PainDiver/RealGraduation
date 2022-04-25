@@ -8,7 +8,7 @@ public class MyProject4 : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore","UMG", "OnlineSubsystem", "﻿OnlineSubsystemSteam﻿", "OnlineSubsystemUtils","SteamWorks","AIModule", "SlateCore", "Slate", "Networking", "Sockets", "CableComponent","Http","Json","JsonUtilities" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore","UMG", "OnlineSubsystem", "﻿OnlineSubsystemSteam﻿", "OnlineSubsystemUtils","SteamWorks","AIModule", "SlateCore", "Slate", "Networking", "Sockets", "CableComponent","Http","Json","JsonUtilities", "GameplayCameras" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "CableComponent" });
 

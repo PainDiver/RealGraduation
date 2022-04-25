@@ -66,6 +66,7 @@ public:
 	UPROPERTY(replicated, BlueprintReadWrite, Category = "Animation")
 		bool _bIsGreeting;
 
+
 	UPROPERTY(BlueprintAssignable, Category = "Event")
 		FDelegateInteract _interactDele;
 	
@@ -78,7 +79,12 @@ public:
 
 	//FCharacterMoveInfo CreateMove(const float& DeltaTime);
 
-	
+	TSubclassOf<UCameraShakeBase> _jumpShake;
+
+	TSubclassOf<UCameraShakeBase> _walkShake;
+
+	TSubclassOf<UCameraShakeBase> _sprintShake;
+
 
 
 private:
@@ -120,6 +126,13 @@ private:
 	void SetAttackInput(bool value) { _attackInput = value; }
 	void SetGreetInput(bool value) { _greetInput = value; }
 
+	UFUNCTION(Server,Reliable)
+	void SwimJump();
+
+	void StartWalkCamShake(float scale);
+	void StartJumpCamShake();
+	void StartSprintCamShake();
+
 	//Inputs
 	float _forwardInput;
 
@@ -136,6 +149,7 @@ private:
 	bool _attackInput;
 
 	bool _greetInput;
+
 
 
 	UPROPERTY()

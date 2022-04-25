@@ -36,6 +36,8 @@ public:
 	UFUNCTION(Server, Reliable)
 		void RPCAdd(AMyCharacter* OtherActor);
 
+
+
 	UFUNCTION(NetMulticast, Reliable)
 		void Activate();
 

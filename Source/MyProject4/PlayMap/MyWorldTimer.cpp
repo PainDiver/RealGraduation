@@ -423,17 +423,16 @@ void AMyWorldTimer::TurnOnSpectateUI_Implementation()
 void AMyWorldTimer::TurnOnFinalTimerUI_Implementation()
 {
 
-	if (_FinalTimerHUDOverlay)
+	if (_FinalTimerHUDOverlay && _FinalTimerHUDOverlay->GetVisibility()==ESlateVisibility::Hidden)
 	{
 		_FinalTimerHUDOverlay->SetVisibility(ESlateVisibility::Visible);
 	}
-	else
+	/*else
 	{
 		_FinalTimerHUDOverlay = CreateWidget<UUserWidget>(this, Cast<UMyGameInstance>(GetGameInstance())->_finalTimerHUDAsset);
 		_FinalTimerHUDOverlay->SetVisibility(ESlateVisibility::Visible);
 		_FinalTimerHUDOverlay->AddToViewport();
-		
-	}
+	}*/
 }
 
 void AMyWorldTimer::ChangeBindAction_AllMighty()

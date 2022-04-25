@@ -10,7 +10,6 @@ UMyCharacterReplicatorComponent::UMyCharacterReplicatorComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
 
 	_respawn = FVector(2770.421387f, 19.757507f, 120.f);
 	// ...

@@ -19,6 +19,28 @@ UMyCharacterActionComponent::UMyCharacterActionComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 	
+
+	static ConstructorHelpers::FClassFinder<UCameraShakeBase> JumpShake(TEXT("/Game/BluePrintFrom_Me/CameraShake/JumpCamShake"));
+	if (JumpShake.Succeeded())
+	{
+		_jumpShake = JumpShake.Class;
+	}
+
+
+	static ConstructorHelpers::FClassFinder<UCameraShakeBase> WalkShake(TEXT("/Game/BluePrintFrom_Me/CameraShake/WalkCamShake"));
+	if (WalkShake.Succeeded())
+	{
+		_walkShake = WalkShake.Class;
+	}
+
+
+	static ConstructorHelpers::FClassFinder<UCameraShakeBase> SprintShake(TEXT("/Game/BluePrintFrom_Me/CameraShake/SprintCamShake"));
+	if (SprintShake.Succeeded())
+	{
+		_sprintShake = SprintShake.Class;
+	}
+
+
 	// ...
 }
 
@@ -29,6 +51,8 @@ void UMyCharacterActionComponent::BeginPlay()
 	Super::BeginPlay();
 	// ...
 	_owner = Cast<AMyCharacter>(GetOwner());
+
+
 }
 
 
@@ -192,13 +216,12 @@ void UMyCharacterActionComponent::AddMoveForward(const float& DeltaTime, const f
 	FRotator rotation = _owner->GetControlRotation();
 	FRotator yawRotation(0.f, rotation.Yaw, 0.f);
 	FVector direction = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::X);
-	
-	
-	_owner->AddMovementInput(direction, Input);
-	
-	//_owner->AddActorWorldOffset(DeltaTime * _owner->GetActorForwardVector() * 500 *Input);
 
+	_owner->AddMovementInput(direction, Input);
+
+	//_owner->AddActorWorldOffset(DeltaTime * _owner->GetActorForwardVector() * 500 *Input);
 }
+
 
 void UMyCharacterActionComponent::AddMoveRight(const float& DeltaTime, const float& Input)
 {
@@ -211,6 +234,7 @@ void UMyCharacterActionComponent::AddMoveRight(const float& DeltaTime, const flo
 
 	//_owner->AddActorWorldOffset(DeltaTime * _owner->GetActorRightVector() * 500 * Input);
 }
+
 
 void UMyCharacterActionComponent::AddLookUp(const float& DeltaTime, const float& Input)
 {
@@ -231,10 +255,9 @@ void UMyCharacterActionComponent::AddLookUp(const float& DeltaTime, const float&
 			_owner->AddControllerPitchInput(Input);
 		}
 	}
-
-
-
 }
+
+
 
 void UMyCharacterActionComponent::AddRotation(const float& DeltaTime, const float& Input)
 {
@@ -244,6 +267,20 @@ void UMyCharacterActionComponent::AddRotation(const float& DeltaTime, const floa
 }
 
 
+void UMyCharacterActionComponent::SwimJump_Implementation()
+{
+	_owner->LaunchCharacter(FVector(0, 0, 600.f),false,true);
+}
+
+void UMyCharacterActionComponent::StartWalkCamShake(float scale)
+{
+	GetWorld()->GetFirstPlayerController()->PlayerCameraManager->StartCameraShake(_walkShake, scale);
+}
+
+void UMyCharacterActionComponent::StartJumpCamShake()
+{
+	GetWorld()->GetFirstPlayerController()->PlayerCameraManager->StartCameraShake(_jumpShake, 1.0);
+}
 
 
 void UMyCharacterActionComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

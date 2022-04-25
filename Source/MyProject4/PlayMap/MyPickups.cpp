@@ -18,7 +18,7 @@
 AMyPickups::AMyPickups()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.	
-	_effect = 1.5f;
+	_effect = 250.f;
 	
 	_ePickUpType = _ePickUpType = static_cast<EPickUpType>(FMath::RandRange(0, static_cast<int32>(EPickUpType::EPT_MAX) - 2));
 
@@ -81,6 +81,7 @@ void AMyPickups::RPCAdd_Implementation(AMyCharacter* character)
 }
 
 
+
 void AMyPickups::Activate_Implementation()
 {
 	_character = GetOwner<AMyCharacter>();
@@ -89,7 +90,7 @@ void AMyPickups::Activate_Implementation()
 	{
 	case EPickUpType::EPT_Booster:
 	{
-		_character->GetCharacterMovement()->MaxWalkSpeed *= _effect;
+		_character->GetCharacterMovement()->MaxWalkSpeed += _effect;
 		GetWorld()->GetTimerManager().SetTimer(_timerHandle, FTimerDelegate::CreateUObject(this, &AMyPickups::RestoreSelf), 10.f, false);
 		UE_LOG(LogTemp, Warning, TEXT("%f"), _character->GetCharacterMovement()->MaxWalkSpeed);
 		break;
@@ -104,7 +105,7 @@ void AMyPickups::Activate_Implementation()
 	{
 		auto owner = GetOwner();
 		auto character = Cast<AMyCharacter>(owner);
-		auto newLocation = character->GetActorLocation()+FVector(0,0,0) + character->GetActorForwardVector()*100;
+		auto newLocation = character->GetActorLocation()+FVector(0,0,0) + character->GetActorForwardVector()*150;
 		auto newRotation = character->_camera->GetForwardVector().Rotation();
 		
 		AActor* projectile;
@@ -133,7 +134,7 @@ void AMyPickups::RestoreSelf_Implementation()
 	{
 	case EPickUpType::EPT_Booster:
 	{
-		_character->GetCharacterMovement()->MaxWalkSpeed = 500.f;
+		_character->GetCharacterMovement()->MaxWalkSpeed -= _effect;
 		break;
 	}
 	default:
@@ -143,3 +144,5 @@ void AMyPickups::RestoreSelf_Implementation()
 	
 	Destroy();
 }
+
+

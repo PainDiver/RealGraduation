@@ -41,11 +41,11 @@ void AMyPlayerState::BeginPlay()
 		}
 		character->SetColor(localInstance->_characterInfo._characterColor);
 		
-		if (!localInstance->_IsDedicatedServer)
-		{
-			localInstance->BindAltF4(true);
-			localInstance->_migration._IsHost = false;
-		}
+		//if (!localInstance->_IsDedicatedServer)
+		//{
+		//	localInstance->BindAltF4(true);
+		//	localInstance->_migration._IsHost = false;
+		//}
 		NotifyConnection();
 		
 	}

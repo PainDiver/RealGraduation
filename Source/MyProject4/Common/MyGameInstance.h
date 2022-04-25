@@ -323,6 +323,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void RequestExit(bool force = false);
 
+	UFUNCTION(BlueprintCallable)
+		FString GetWorldName();
 
 	UFUNCTION(BlueprintCallable)
 	void WriteMasterServerInfo(const FString& maserServerSteamIP);

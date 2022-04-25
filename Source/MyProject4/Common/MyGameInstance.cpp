@@ -204,7 +204,7 @@ void UMyGameInstance::OnCreateSessionComplete(FName sessionName, bool success)
 
 	UWidgetLayoutLibrary::RemoveAllWidgets(GetWorld());
 	
-	//world->ServerTravel("/Game/map/ReadyMap");
+	//world->ServerTravel("/Game/map/ReadyMap?listen");
 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "Server Travel");
 	//CheckOpenPublicConnection(true);
 	
@@ -601,7 +601,6 @@ void UMyGameInstance::CreateDedicatedServers(FString url)
 		ExecuterPathDebug = url;
 		ExecuterPathRelease = url;
 	}
-
 
 	uint32 OutProcessID = 0;
 	queryPort++;
@@ -1112,10 +1111,16 @@ EMapSelection UMyGameInstance::BranchMap()
 
 }
 
-
 bool UMyGameInstance::DediCheck()
 {
 	return GetWorld()->GetNetMode() != ENetMode::NM_ListenServer;
+}
+
+FString UMyGameInstance::GetWorldName()
+{
+	FString mapname = GetWorld()->GetMapName();
+	mapname.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+	return mapname;
 }
 
 void UMyGameInstance::RequestExit(bool force)
