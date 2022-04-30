@@ -137,7 +137,7 @@ void UMyCharacterParkourComponent::WallRunRight_Multi_Implementation()
 		newRot.Roll = -30.0f;
 		FLatentActionInfo LatentInfo2;
 		LatentInfo2.CallbackTarget = this;
-		UKismetSystemLibrary::MoveComponentTo(_camera, _camera->GetRelativeLocation(), newRot, true, true, 0.2f, false, EMoveComponentAction::Move, LatentInfo2);
+		UKismetSystemLibrary::MoveComponentTo(_camera, _camera->GetRelativeLocation(), newRot, true, true, 0.1f, false, EMoveComponentAction::Move, LatentInfo2);
 	}
 
 }
@@ -219,7 +219,7 @@ void UMyCharacterParkourComponent::WallRunLeft_Multi_Implementation()
 		LatentInfo2.CallbackTarget = this;
 		auto newRot = _camera->GetRelativeRotation();
 		newRot.Roll = 30.0f;
-		UKismetSystemLibrary::MoveComponentTo(_camera, _camera->GetRelativeLocation(), newRot, true, true, 0.2f, false, EMoveComponentAction::Move, LatentInfo2);
+		UKismetSystemLibrary::MoveComponentTo(_camera, _camera->GetRelativeLocation(), newRot, true, true, 0.1f, false, EMoveComponentAction::Move, LatentInfo2);
 	}
 }
 
@@ -256,7 +256,7 @@ void UMyCharacterParkourComponent::StopWallRunning_Multi_Implementation()
 
 void UMyCharacterParkourComponent::WallRunningJump_Implementation()
 {
-	_movementComponent->Launch(_wallNormal * 500 + FVector{ 0,0,500.f });
+	_movementComponent->Launch(_wallNormal * 500 + FVector{ 0,0,800.f });
 }
 
 
@@ -274,9 +274,8 @@ void UMyCharacterParkourComponent::Ledge_Multi_Implementation()
 {
 	FHitResult hit;
 	FVector start = _character->GetActorLocation();
-	FVector end = _character->GetActorLocation() + _character->GetActorForwardVector() * 120;
+	FVector end = _character->GetActorLocation() + _character->GetActorForwardVector() * 100;
 	bool wallCheck = GetWorld()->LineTraceSingleByChannel(hit, start, end, ECollisionChannel::ECC_Visibility);
-
 
 	if (!wallCheck)
 	{
@@ -289,7 +288,7 @@ void UMyCharacterParkourComponent::Ledge_Multi_Implementation()
 		FLatentActionInfo latent;
 		latent.CallbackTarget = this;
 		
-		UKismetSystemLibrary::MoveComponentTo(_springArm, FVector(-400, 0, 0), FRotator(0, 0, 0), true, true, 0.2f, false, EMoveComponentAction::Move, latent);
+		UKismetSystemLibrary::MoveComponentTo(_springArm, FVector(-800, 0, 0), FRotator(0, 0, 0), true, true, 0.2f, false, EMoveComponentAction::Move, latent);
 	}
 
 	_movementComponent->Velocity = FVector::ZeroVector;
@@ -305,10 +304,10 @@ void UMyCharacterParkourComponent::Ledge_Multi_Implementation()
 				{
 					FHitResult hit;
 					FVector start = _character->GetActorLocation();
-					FVector end = _character->GetActorLocation() + _character->GetActorForwardVector() * 120;
+					FVector end = _character->GetActorLocation() + _character->GetActorForwardVector() * 100;
 					
 					bool wallCheck = GetWorld()->LineTraceSingleByChannel(hit, start, end, ECollisionChannel::ECC_Visibility);
-					if (!wallCheck || _movementComponent->Velocity.Size()>50.f)
+					if (!wallCheck || _movementComponent->Velocity.Size()>30.f)
 					{
 						Unledge();
 					}
@@ -322,7 +321,7 @@ void UMyCharacterParkourComponent::LedgeJump_Implementation()
 	GetWorld()->GetTimerManager().ClearTimer(_ledgeTimer);
 	Unledge();
 	LedgeJump_Multi();
-	_movementComponent->Launch(FVector(0,0,1000));
+	_movementComponent->Launch(FVector(0,0,1200));
 }
 
 void UMyCharacterParkourComponent::LedgeJump_Multi_Implementation()
@@ -467,12 +466,12 @@ void UMyCharacterParkourComponent::Glide_Implementation()
 
 void UMyCharacterParkourComponent::Glide_Multi_Implementation()
 {
-	/*if (_character->IsLocallyControlled())
+	if (_character->IsLocallyControlled())
 	{
 		FLatentActionInfo latent;
 		latent.CallbackTarget = this;
 		UKismetSystemLibrary::MoveComponentTo(_springArm, FVector(-400, 0, 0), FRotator(0, 0, 0), true, true, 0.2f, false, EMoveComponentAction::Move, latent);
-	}*/
+	}
 	_character->_glide->SetVisibility(true);
 
 	_movementComponent->GravityScale = 0.15f;
@@ -491,12 +490,12 @@ void UMyCharacterParkourComponent::UnGlide_Implementation()
 
 void UMyCharacterParkourComponent::UnGlide_Multi_Implementation()
 {
-	/*if (_character->IsLocallyControlled())
+	if (_character->IsLocallyControlled())
 	{
 		FLatentActionInfo latent;
 		latent.CallbackTarget = this;
 		UKismetSystemLibrary::MoveComponentTo(_springArm, FVector(0, 0, 50), FRotator(0, 0, 0), true, true, 0.2f, false, EMoveComponentAction::Move, latent);
-	}*/
+	}
 	_character->_glide->SetVisibility(false);
 
 	_movementComponent->GravityScale = 1.0f;

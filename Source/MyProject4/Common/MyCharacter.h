@@ -8,15 +8,10 @@
 #include "MyCharacter.generated.h"
 
 
-
-
-
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class MYPROJECT4_API AMyCharacter : public ACharacter
 {
 	GENERATED_BODY()
-
-
 
 public:
 	// Sets default values for this character's properties
@@ -32,8 +27,6 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	
 
 public:	
 	// Called every frame
@@ -180,13 +173,8 @@ private:
 	
 	void UnLedge();
 
-
 	UFUNCTION(Server,Reliable)
 	void DelayParkour();
-
-	
-
-
 
 	//Initial Value
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Attack")

@@ -40,7 +40,6 @@ AMyCharacter::AMyCharacter()
 	_actionComponent = CreateDefaultSubobject<UMyCharacterActionComponent>(TEXT("ActionComponent"));
 	_springArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	_camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-
 	_glide = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Glide"));
 
 
@@ -100,7 +99,10 @@ void AMyCharacter::BeginPlay()
 		SpawnDefaultWeapon();
 	}
 
-	_glide->SetVisibility(false);
+	if (_glide)
+	{
+		_glide->SetVisibility(false);
+	}
 
 	if (IsLocallyControlled()) // use only for listen server host migration
 	{
@@ -121,8 +123,6 @@ void AMyCharacter::BeginPlay()
 		EnableInput(controller);
 	}
 
-	GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "initialized character");
-	UE_LOG(LogTemp, Warning, TEXT("Character Okay"));
 }
 
 // Called every frame
@@ -145,6 +145,7 @@ void AMyCharacter::Tick(float DeltaTime)
 	//	_replicatorComponent->EnqueueAcknowledgedMove(move);
 	//	_replicatorComponent->SendMoveToServer(move);
 	//}
+
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		if (GetActorLocation().Z < -15000 || GetActorLocation().Z > 10000)
@@ -152,6 +153,7 @@ void AMyCharacter::Tick(float DeltaTime)
 			_replicatorComponent->Respawn();
 		}
 	}
+
 	if (GetLocalRole() == ROLE_AutonomousProxy)
 	{
 		_parkourComponent->CheckGage(DeltaTime);
@@ -196,9 +198,6 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	PlayerInputComponent->BindAxis("Turn", this, &AMyCharacter::Turn);
 	PlayerInputComponent->BindAxis("LookUp", this, &AMyCharacter::LookUp);
-
-
-
 
 	//PlayerInputComponent->BindAction("Option", IE_Pressed, this, &AMyCharacter::OpenOption);
 
@@ -445,6 +444,7 @@ void AMyCharacter::Jump()
 	{
 		_parkourComponent->WallRunLeft();
 		_parkourComponent->WallRunRight();
+		return;
 	}
 
 	if (HasAuthority())

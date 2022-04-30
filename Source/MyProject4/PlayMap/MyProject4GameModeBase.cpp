@@ -112,7 +112,6 @@ void AMyProject4GameModeBase::PreLogin(const FString& Options, const FString& Ad
 APlayerController* AMyProject4GameModeBase::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
 	return Super::Login(NewPlayer, InRemoteRole, Options, Portal, UniqueId, ErrorMessage);
-
 }
 
 void AMyProject4GameModeBase::Logout(AController* Exiting)

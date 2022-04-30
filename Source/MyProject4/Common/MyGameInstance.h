@@ -186,7 +186,7 @@ public:
 
 	//In Game Values
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")
-	bool _gameEnterClosed;
+	bool _gameEnterClosed =false;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameInfo")

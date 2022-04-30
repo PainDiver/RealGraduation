@@ -274,12 +274,18 @@ void UMyCharacterActionComponent::SwimJump_Implementation()
 
 void UMyCharacterActionComponent::StartWalkCamShake(float scale)
 {
-	GetWorld()->GetFirstPlayerController()->PlayerCameraManager->StartCameraShake(_walkShake, scale);
+	if (GetWorld()->GetFirstPlayerController())
+	{
+		GetWorld()->GetFirstPlayerController()->PlayerCameraManager->StartCameraShake(_walkShake, scale);
+	}
 }
 
 void UMyCharacterActionComponent::StartJumpCamShake()
 {
+	if (GetWorld()->GetFirstPlayerController())
+	{
 	GetWorld()->GetFirstPlayerController()->PlayerCameraManager->StartCameraShake(_jumpShake, 1.0);
+	}
 }
 
 
