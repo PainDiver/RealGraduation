@@ -106,20 +106,6 @@ void AMyCharacter::BeginPlay()
 
 	if (IsLocallyControlled()) // use only for listen server host migration
 	{
-		////UGameplayStatics::DeleteGameInSlot(HOST_MIGRATION, 0);
-		//_saveGame = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(HOST_MIGRATION, 0));
-		//if (_saveGame)
-		//{
-		//	if (HasAuthority())
-		//	{
-		//		_saveGame->ServerLoad(GetWorld());
-		//	}
-		//	else
-		//	{
-		//		_saveGame->ClientLoad(GetWorld());
-		//	}
-		//}
-		//UGameplayStatics::DeleteGameInSlot(HOST_MIGRATION, 0);
 		EnableInput(controller);
 	}
 
@@ -139,13 +125,6 @@ void AMyCharacter::Tick(float DeltaTime)
 		return;
 	}
 
-	//FCharacterMoveInfo move = _actionComponent->CreateMove(DeltaTime);
-	//if (GetLocalRole() == ROLE_AutonomousProxy)
-	//{
-	//	_replicatorComponent->EnqueueAcknowledgedMove(move);
-	//	_replicatorComponent->SendMoveToServer(move);
-	//}
-
 	if (GetLocalRole() == ROLE_Authority)
 	{
 		if (GetActorLocation().Z < -15000 || GetActorLocation().Z > 10000)
@@ -160,10 +139,6 @@ void AMyCharacter::Tick(float DeltaTime)
 		_parkourComponent->RegenerateGage(DeltaTime);
 	}
 
-	//if (IsLocallyControlled())
-	//{
-	//	_actionComponent->SimulateMove(move);
-	//}
 
 }
 
@@ -247,8 +222,57 @@ void AMyCharacter::SetColor_Multi_Implementation(const FLinearColor& color)
 
 void AMyCharacter::MoveForward(float value)
 {
-	//_actionComponent->AddMoveForward(0,value);
+	if (!_actionComponent||!_characterMovementComponent)
+	{
+		return;
+	}
 
+
+	if (_parkourComponent&& _parkourComponent->IsActive() &&_parkourComponent->_bIsledging)
+	{	
+		if (abs(value) > 0.2)
+		{
+			if (value > 0)
+			{
+				if (_parkourComponent->_upWall)
+				{
+					_parkourComponent->SetLedgeUpMoveDir(value);
+					ClimbWall(GetCapsuleComponent()->GetRelativeLocation() + _parkourComponent->_ledgeUpMoveDir * 50.f);
+					auto newRot = _parkourComponent->_newRot;
+					newRot.Pitch -= 360.f;
+					GetMesh()->SetRelativeRotation(newRot);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("No Up Wall"));
+					_parkourComponent->LedgeJump();
+				}
+			}
+			else
+			{
+				if (_parkourComponent->_downWall)
+				{
+					_parkourComponent->SetLedgeUpMoveDir(value);
+					ClimbWall(GetCapsuleComponent()->GetRelativeLocation() + _parkourComponent->_ledgeUpMoveDir * -50.f);
+					auto newRot = _parkourComponent->_newRot;
+					newRot.Pitch -= 360.f;
+					GetMesh()->SetRelativeRotation(newRot);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("No Down Wall"));
+					_parkourComponent->LedgeJump();
+				}
+			}
+		}
+		else
+		{
+			_parkourComponent->SetLedgeUpMoveDir(value);
+		}
+		
+		return;
+	}
+	
 	FRotator rotation = GetControlRotation();
 	FRotator yawRotation(0.f, rotation.Yaw, 0.f);
 	FVector direction = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::X);
@@ -256,17 +280,13 @@ void AMyCharacter::MoveForward(float value)
 	AddMovementInput(direction, value);
 
 
-	if (!_characterMovementComponent->IsFalling() || _parkourComponent->_bIsWallRunning)
+	if (_actionComponent && _characterMovementComponent && _parkourComponent && _parkourComponent->IsActive())
 	{
+		if(_parkourComponent->_bIsWallRunning&& !_characterMovementComponent->IsFalling())
 		_actionComponent->StartWalkCamShake(abs(value));
 	}
-	else if (!_characterMovementComponent->IsFalling() || _parkourComponent->_bIsWallRunning)
-	{
 
-	}
-
-
-	if (_parkourComponent && _parkourComponent->_bIsSprinting && value < 0)
+	if (_parkourComponent && _parkourComponent->IsActive() &&_parkourComponent->_bIsSprinting && value < 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Fire SprintStop"));
 		_parkourComponent->StopSprint();
@@ -282,14 +302,61 @@ void AMyCharacter::MoveRight(float value)
 {
 	//_actionComponent->AddMoveRight(0, value);
 
+	if (_parkourComponent&& _parkourComponent->IsActive() &&_parkourComponent->_bIsledging)
+	{
+		if (abs(value) > 0.2)
+		{
+			if (value > 0)
+			{
+				if (_parkourComponent->_rightWall)
+				{
+					_parkourComponent->SetLedgeRightMoveDir(value);
+					ClimbWall(GetCapsuleComponent()->GetRelativeLocation()+ _parkourComponent->_ledgeRightMoveDir * 40.f);				
+					auto newRot = _parkourComponent->_newRot;
+					newRot.Pitch -= 360.f;
+					GetMesh()->SetRelativeRotation(newRot);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("No Right Wall"));
+					_parkourComponent->LedgeJump();
+				}
+			}
+			else
+			{
+				if (_parkourComponent->_leftWall)
+				{
+					_parkourComponent->SetLedgeRightMoveDir(value);
+					ClimbWall(GetCapsuleComponent()->GetRelativeLocation()+ _parkourComponent->_ledgeRightMoveDir * -40.f);
+					auto newRot = _parkourComponent->_newRot;
+					newRot.Pitch -= 360.f;
+					GetMesh()->SetRelativeRotation(newRot);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("No Left Wall"));
+					_parkourComponent->LedgeJump();
+				}
+			}
+		}
+		else
+		{
+			_parkourComponent->SetLedgeRightMoveDir(value);
+		}
+		return;
+	}
+
 	FRotator rotation = GetControlRotation();
 	FRotator yawRotation(0.f, rotation.Yaw, 0.f);
 	FVector direction = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::Y);
 	AddMovementInput(direction, value);
 
-	if (!_characterMovementComponent->IsFalling() || _parkourComponent->_bIsWallRunning)
+	if (_actionComponent&&_characterMovementComponent&& _parkourComponent&& _parkourComponent->IsActive())
 	{
-		_actionComponent->StartWalkCamShake(abs(value));
+		if (!_characterMovementComponent->IsFalling() || _parkourComponent->_bIsWallRunning)
+		{
+			_actionComponent->StartWalkCamShake(abs(value));
+		}
 	}
 
 	//if (_actionComponent)
@@ -327,6 +394,12 @@ void AMyCharacter::LookUp(float value)
 
 void AMyCharacter::Turn(float value)
 {
+
+	if (!_parkourComponent && _parkourComponent->IsActive() || _parkourComponent->_bIsledging)
+	{
+		return;
+	}
+
 	//_actionComponent->AddRotation(0, value);
 	AddControllerYawInput(value);
 
@@ -440,7 +513,7 @@ void AMyCharacter::Jump()
 
 	// delay, ledging, falling, moving, back, last input, wall running 검사 필요
 
-	if (!_parkourComponent->_bIsGliding && _characterMovementComponent->IsFalling() && _characterMovementComponent->Velocity.Size() >= 500 && lastLocalVector.X > 0 && !_parkourDelay)
+	if (_parkourComponent->IsActive()&&!_parkourComponent->_bIsGliding && _characterMovementComponent->IsFalling() && _characterMovementComponent->Velocity.Size() >= 500 && lastLocalVector.X > 0 && !_parkourDelay)
 	{
 		_parkourComponent->WallRunLeft();
 		_parkourComponent->WallRunRight();
@@ -449,7 +522,7 @@ void AMyCharacter::Jump()
 
 	if (HasAuthority())
 	{
-		if (_parkourComponent && _characterMovementComponent->IsFalling())
+		if (_parkourComponent&& _parkourComponent->IsActive() && _characterMovementComponent->IsFalling())
 		{
 			if (_parkourComponent->_bIsledging && !_parkourDelay)
 			{
@@ -470,14 +543,14 @@ void AMyCharacter::JumpRelease()
 {
 	ACharacter::StopJumping();
 
-	if (_parkourComponent && _parkourComponent->_bIsWallRunning && !_parkourDelay)
+	if (_parkourComponent && _parkourComponent->IsActive() && _parkourComponent->_bIsWallRunning && !_parkourDelay)
 	{
 		_parkourComponent->StopWallRunning();
 		_parkourComponent->WallRunningJump();
 		DelayParkour();
 		//camerashake
 	}
-	if (_parkourComponent && _parkourComponent->_bIsGliding)
+	if (_parkourComponent && _parkourComponent->IsActive() && _parkourComponent->_bIsGliding)
 	{
 		_parkourComponent->UnGlide();
 	}
@@ -494,7 +567,7 @@ void AMyCharacter::Sprint()
 	FVector lastLocalVector = UKismetMathLibrary::InverseTransformDirection(transform, lastWorldVector);
 
 
-	if (_parkourComponent && lastLocalVector.X > 0 && lastLocalVector.Y != 1.0f && _parkourComponent->_stamina)
+	if (_parkourComponent&& _parkourComponent->IsActive() && lastLocalVector.X > 0 && lastLocalVector.Y != 1.0f && _parkourComponent->_stamina)
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Fire Sprint"));
 		_parkourComponent->Sprint();
@@ -503,7 +576,7 @@ void AMyCharacter::Sprint()
 
 void AMyCharacter::SprintRelease()
 {
-	if (_parkourComponent && _parkourComponent->_bIsSprinting)
+	if (_parkourComponent&& _parkourComponent->IsActive() && _parkourComponent->_bIsSprinting)
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Stop Sprint"));
 		_parkourComponent->StopSprint();
@@ -514,7 +587,7 @@ void AMyCharacter::SprintRelease()
 
 void AMyCharacter::Ledge()
 {
-	if (_parkourComponent && !_parkourDelay && _characterMovementComponent->IsFalling())
+	if (_parkourComponent&& _parkourComponent->IsActive() && !_parkourDelay && _characterMovementComponent->IsFalling())
 	{
 		_parkourComponent->Ledge();
 		DelayParkour();
@@ -523,7 +596,7 @@ void AMyCharacter::Ledge()
 
 void AMyCharacter::UnLedge()
 {
-	if (_parkourComponent && _parkourComponent->_bIsledging)
+	if (_parkourComponent&& _parkourComponent->IsActive() && _parkourComponent->_bIsledging)
 	{
 		_parkourComponent->Unledge();
 		DelayParkour();
@@ -546,6 +619,17 @@ void AMyCharacter::DelayParkour_Implementation()
 		}),
 		0.3f, false);
 }
+
+
+void AMyCharacter::ClimbWall_Implementation(const FVector& vec)
+{
+	auto newRot = GetCapsuleComponent()->GetRelativeRotation();
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	UKismetSystemLibrary::MoveComponentTo(GetCapsuleComponent(), vec, newRot, true, true, 0.05f, true, EMoveComponentAction::Move, LatentInfo);
+
+}
+
 
 
 void AMyCharacter::FlyUp_AllMighty_Server_Implementation(float value)

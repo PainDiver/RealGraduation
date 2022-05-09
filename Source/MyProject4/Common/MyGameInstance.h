@@ -254,8 +254,8 @@ public:
 	UFUNCTION(Server,Reliable,BlueprintCallable, Category = "Transition")
 		void MyServerTravel(const FString& mapName, const FString& additionalOption, bool bAbsolute);
 
-	UFUNCTION(Server, Reliable, BlueprintCallable)
-		void FindLowestPingAndNotify();
+	/*UFUNCTION(Server, Reliable, BlueprintCallable)
+		void FindLowestPingAndNotify();*/
 
 	UFUNCTION(Client,Reliable,BlueprintCallable)
 		void DestroySession();
@@ -272,7 +272,7 @@ public:
 
 	inline IOnlineSessionPtr GetCurrentSessionInterface() { return _sessionInterface; }
 
-	void BindAltF4(bool on);
+	//void BindAltF4(bool on);
 
 	bool _exitRequest =false;
 

@@ -108,26 +108,59 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 		void UnGlide_Multi();
 
+	UFUNCTION(Server, Reliable)
+		void SetLedgeUpMoveDir(float value);
+
+	UFUNCTION(Server, Reliable)
+		void SetLedgeRightMoveDir(float value);
 
 
 	UPROPERTY(replicated, BlueprintReadWrite)
-		bool _bIsWallRunning;
+		bool _bIsWallRunning = false;
 
 	UPROPERTY(replicated, BlueprintReadWrite)
-		bool _bIsledging;
+		bool _bIsledging = false;
 
 	UPROPERTY(replicated, BlueprintReadWrite)
-		bool _bIsSprinting;
+		bool _bIsSprinting = false;
 
 	UPROPERTY(replicated, BlueprintReadWrite)
-		bool _bIsGliding;
-
+		bool _bIsGliding = false;
 
 	UPROPERTY(VisibleAnyWhere,BlueprintReadWrite)
 		float _stamina;
 
 	UPROPERTY(VisibleAnyWhere, BlueprintReadWrite)
 		float _fuel;
+
+
+	UPROPERTY(replicated)
+		FVector _ledgeRightMoveDir;
+
+	UPROPERTY(replicated)
+		FVector _ledgeUpMoveDir;
+
+	UPROPERTY(replicated)
+		FRotator _newRot;
+
+
+	UPROPERTY(replicated)
+	bool _upWall=false;
+	UPROPERTY(replicated)
+	bool _downWall=false;
+	UPROPERTY(replicated)
+	bool _leftWall = false;
+	UPROPERTY(replicated)
+	bool _rightWall=false;
+
+
+
+
+	UPROPERTY(replicated,BlueprintReadWrite)
+	float _ledgeUp;
+
+	UPROPERTY(replicated, BlueprintReadWrite)
+	float _ledgeRight;
 
 
 private:

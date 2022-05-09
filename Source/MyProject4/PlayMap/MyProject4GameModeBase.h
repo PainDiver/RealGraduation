@@ -93,12 +93,16 @@ private:
 
 	bool _bIsStarted;
 
+	bool _bCountRecordStarted;
+
 	FTimerHandle _timerForCheckConnection;
 
 	FTimerHandle _timerForControl;
 
 	FTimerHandle _delayTimer;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,meta = (AllowPrivateAccess = "true"))
+	FCountTimer _timer;
 
 	UPROPERTY()
 		TArray<FTimerHandle> _tickTimers;

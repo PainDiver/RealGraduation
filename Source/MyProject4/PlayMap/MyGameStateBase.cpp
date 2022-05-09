@@ -99,4 +99,7 @@ void AMyGameStateBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 	DOREPLIFETIME(AMyGameStateBase, _bGameStarted);
 	DOREPLIFETIME(AMyGameStateBase, _connectedPlayersInfo);
 	DOREPLIFETIME(AMyGameStateBase, _bGameEnded);
+	DOREPLIFETIME(AMyGameStateBase, _timer);
+
+
 }

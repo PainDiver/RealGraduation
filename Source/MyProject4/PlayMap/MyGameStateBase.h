@@ -11,7 +11,37 @@
  * 
  */
 
+USTRUCT(BlueprintType)
+struct FCountTimer
+{
+	GENERATED_USTRUCT_BODY()
 
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int _minutes;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int _seconds;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float _milliseconds;
+
+	void Count(const float& deltaTime)
+	{
+		_milliseconds += deltaTime;
+		if (_milliseconds >= 1)
+		{
+			_seconds++;
+			_milliseconds--;
+		}
+		if (_seconds >= 60)
+		{
+			_minutes++;
+			_seconds = 0;
+		}
+		
+	}
+
+};
 
 UCLASS()
 class MYPROJECT4_API AMyGameStateBase : public AGameStateBase
@@ -58,4 +88,8 @@ public:
 
 	UPROPERTY(replicated, BlueprintReadOnly)
 		TArray<FCharacterInfo> _connectedPlayersInfo;
+
+	UPROPERTY(replicated, BlueprintReadOnly)
+		FCountTimer _timer;
+
 };

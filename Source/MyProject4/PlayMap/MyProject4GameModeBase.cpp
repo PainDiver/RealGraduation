@@ -32,9 +32,11 @@ AMyProject4GameModeBase::AMyProject4GameModeBase()
 	_bBoss = true;
 	_bIsFinal = false;
 	_bIsStarted = false;
+	_bCountRecordStarted = false;
 
 	_StartTimer = 5;
-	_abandonUnconnectedPlayersWithIn = 10;
+	_abandonUnconnectedPlayersWithIn = 25;
+
 }
 
 // Called when the game starts or when spawned
@@ -73,7 +75,7 @@ void AMyProject4GameModeBase::BeginPlay()
 						AMyGameStateBase* gameState = GetGameState<AMyGameStateBase>();
 						gameState->_bIsAllPlayersReady = true;
 						gameState->_connectedPlayersInfo.Empty();
-					}), 12.f, false);
+					}), 18.f, false);
 				GetWorldTimerManager().ClearTimer(_timerForCheckConnection);
 			}
 		}), 0.1, true);
@@ -91,9 +93,21 @@ void AMyProject4GameModeBase::Tick(float DeltaTime)
 	{
 		if (_gameState->_bIsAllPlayersReady)
 		{
-			CountEnemyTimer(DeltaTime);
+			//CountEnemyTimer(DeltaTime);
 			CountFinalTimer(DeltaTime);
 			CountStartTimer(DeltaTime);
+
+			FTimerHandle delay;
+			GetWorldTimerManager().SetTimer(delay, FTimerDelegate::CreateLambda(
+				[&]() 
+				{
+					_bCountRecordStarted = true;
+				}
+			), 5.f,false);
+		}
+		if (_bCountRecordStarted)
+		{
+			_gameState->_timer.Count(DeltaTime);
 		}
 	}
 }

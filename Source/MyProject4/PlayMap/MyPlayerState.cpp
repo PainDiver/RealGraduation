@@ -34,7 +34,7 @@ void AMyPlayerState::BeginPlay()
 			return;
 		}
 		SetCharacterInfo_Server(localInstance->_characterInfo);
-		auto character = Cast<AMyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		auto character = Cast<AMyCharacter>(GetOwner());
 		if (!character)
 		{
 			return;
@@ -71,7 +71,7 @@ void AMyPlayerState::OnRep_InitializeColorAndNotifyConnection_Implementation()
 
 void AMyPlayerState::OnRep_InitializeColorAndNotifyConnection_Multi_Implementation()
 {
-	auto character = Cast<AMyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	auto character = Cast<AMyCharacter>(GetOwner());
 	if (!character)
 	{
 		return;
@@ -109,68 +109,6 @@ void AMyPlayerState::NotifyConnection_Implementation()
 }
 
 
-void AMyPlayerState::OnRep_ServerMigration_Implementation()
-{
-	if (GetOwner<APlayerController>() == UGameplayStatics::GetPlayerController(GetWorld(), 0))
-	{
-		auto gameInstance = Cast<UMyGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-		if (!gameInstance)
-		{
-			return;
-		}
-		gameInstance->SetMigartionInfo(GetMigrationInfo());
-		SaveBeforeExit();
-		UE_LOG(LogTemp, Warning, TEXT("MigrationPacket Changed for new Host"));
-		GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "MigrationPacket Changed for new host");
-	}
-	//else
-	//{
-	//	auto state = Cast<AMyGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
-	//	auto gameInstance = Cast<UMyGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-	//	if (!state || !gameInstance)
-	//	{
-	//		return;
-	//	}
-	//	gameInstance->SetMigartionInfo({ false,GetPlayerName(),GetWorld()->GetMapName(),state->_bGameStarted});
-	//	SaveBeforeExit();
-	//	UE_LOG(LogTemp, Warning, TEXT("MigrationPacket Changed in new Host and saved for client data"));
-	//	GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "MigrationPacket Changed in new Host and saved for client data");
-	//}
-}
-
-void AMyPlayerState::SetMigrationInfo_Implementation(const FMigrationPacket& info)
-{	
-	GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, GetName());
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *GetName());
-	GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, FString::FromInt(static_cast<int>(GetLocalRole()))+" role");
-	UE_LOG(LogTemp, Warning, TEXT("%d role"), static_cast<int>(GetLocalRole()));
-
-	_migrationInfo = info;
-}
-
-void AMyPlayerState::SaveBeforeExit_Implementation()
-{
-	UE_LOG(LogTemp, Warning, TEXT("SaveBeforeExit Start"));
-	if (!GetWorld())
-	{
-		return;
-	}
-
-	if (GetWorld()->IsServer())
-	{
-		return;
-	}
-
-	_saveGameInstance = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(HOST_MIGRATION, 0));
-	if (!_saveGameInstance)
-	{
-		_saveGameInstance = Cast<UMySaveGame>(UGameplayStatics::CreateSaveGameObject(UMySaveGame::StaticClass()));
-	}
-	_saveGameInstance->Save(GetWorld());
-	UE_LOG(LogTemp, Warning, TEXT("SaveBeforeExit Done"));
-}
-
-
 void AMyPlayerState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -181,7 +119,6 @@ void AMyPlayerState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& Out
 	DOREPLIFETIME(AMyPlayerState, _Initialized);
 	DOREPLIFETIME(AMyPlayerState, _allMightyMode);
 	DOREPLIFETIME(AMyPlayerState, _characterInfo);
-	DOREPLIFETIME(AMyPlayerState, _migrationInfo);
 
 }
 

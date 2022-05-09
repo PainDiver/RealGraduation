@@ -207,12 +207,11 @@ void UMyGameInstance::OnCreateSessionComplete(FName sessionName, bool success)
 	//world->ServerTravel("/Game/map/ReadyMap?listen");
 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "Server Travel");
 	//CheckOpenPublicConnection(true);
-	
 }
 
 void UMyGameInstance::OnDestroySessionComplete(FName sessionName, bool success)
 {
-	BindAltF4(false);
+	//BindAltF4(false);
 	if (_exitRequest)
 	{
 		//UGameplayStatics::DeleteGameInSlot(HOST_MIGRATION, 0);
@@ -227,34 +226,9 @@ void UMyGameInstance::OnDestroySessionComplete(FName sessionName, bool success)
 
 void UMyGameInstance::OnNetworkFailure(UWorld* world, UNetDriver* netDriver, ENetworkFailure::Type failureType, const FString& error)
 {
-
-	BindAltF4(false);
-	
-	auto existingSession = _sessionInterface->GetNamedSession(SESSION_NAME);
-	
-	if (existingSession != nullptr && _sessionInterface)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Migrating Start"));
-		if (_migration._IsHost == true)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "you're new host");
-			_sessionInterface->OnDestroySessionCompleteDelegates.Clear();
-			_sessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMyGameInstance::OnDestroySessionServerMigration);
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, "you're client traveling to new host");
-			_sessionInterface->OnDestroySessionCompleteDelegates.Clear();
-			_sessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UMyGameInstance::OnDestroySessionClientMigration);
-		}
-		_sessionInterface->DestroySession(SESSION_NAME);
-		UE_LOG(LogTemp, Warning, TEXT("Migrating Done"));
-	}
-	else
-	{
-		ReturnToMainMenu();
-		UE_LOG(LogTemp, Warning, TEXT("Returning To Menu"));
-	}
+	//BindAltF4(false);
+	ReturnToMainMenu();
+	UE_LOG(LogTemp, Warning, TEXT("Returning To Menu"));
 }
 
 
@@ -474,99 +448,99 @@ bool UMyGameInstance::CheckOpenPublicConnection(bool isIn)
 
 }
 
-void UMyGameInstance::FindLowestPingAndNotify_Implementation()
-{
-	auto gameState = Cast<AGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
-	
-	auto readyRoomGameState = Cast<AReadyRoomGameStateBase>(gameState);
-	if (readyRoomGameState)
-	{
-		readyRoomGameState->FindAllPlayerControllerHideAllWidget();
-	}
-	
-	auto myGameState = Cast<AMyGameStateBase>(gameState);
-	bool gameStarted = false;
-	if (myGameState)
-	{
-		gameStarted = myGameState->_bGameStarted;
-	}
+//void UMyGameInstance::FindLowestPingAndNotify_Implementation()
+//{
+//	auto gameState = Cast<AGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
+//	
+//	auto readyRoomGameState = Cast<AReadyRoomGameStateBase>(gameState);
+//	if (readyRoomGameState)
+//	{
+//		readyRoomGameState->FindAllPlayerControllerHideAllWidget();
+//	}
+//	
+//	auto myGameState = Cast<AMyGameStateBase>(gameState);
+//	bool gameStarted = false;
+//	if (myGameState)
+//	{
+//		gameStarted = myGameState->_bGameStarted;
+//	}
+//
+//
+//	if (gameState->PlayerArray.IsValidIndex(1) && GetWorld()->IsServer())
+//	{
+//		auto players = gameState->PlayerArray;
+//		players.Sort([](const APlayerState& a, const APlayerState& b)
+//			{
+//				return a.GetPing() < b.GetPing();
+//			});
+//
+//		APlayerState* lowPingPlayer;
+//		auto host = Cast<AMyPlayerState>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPlayerState<AMyPlayerState>());
+//		if (players[0] == host)
+//		{
+//			lowPingPlayer = players[1];
+//		}
+//		else
+//		{
+//			lowPingPlayer = players[0];
+//		}
+//		auto lowPing = Cast<AMyPlayerState>(lowPingPlayer);
+//		auto mapname = GetWorld()->GetMapName();
+//		mapname.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+//
+//		auto name = lowPing->GetPlayerName();
+//		if (name.IsEmpty())
+//		{
+//			name = "NewHost";
+//		}
+//
+//		lowPing->SetMigrationInfo({true, name,mapname,gameStarted});
+//		host->SaveBeforeExit();
+//		
+//		GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "Found low ping "+ mapname);
+//	}
+//
+//	//Cast<AMyPlayerState>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPlayerState<AMyPlayerState>())->SaveBeforeExit();
+//
+//}
 
 
-	if (gameState->PlayerArray.IsValidIndex(1) && GetWorld()->IsServer())
-	{
-		auto players = gameState->PlayerArray;
-		players.Sort([](const APlayerState& a, const APlayerState& b)
-			{
-				return a.GetPing() < b.GetPing();
-			});
 
-		APlayerState* lowPingPlayer;
-		auto host = Cast<AMyPlayerState>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPlayerState<AMyPlayerState>());
-		if (players[0] == host)
-		{
-			lowPingPlayer = players[1];
-		}
-		else
-		{
-			lowPingPlayer = players[0];
-		}
-		auto lowPing = Cast<AMyPlayerState>(lowPingPlayer);
-		auto mapname = GetWorld()->GetMapName();
-		mapname.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
-
-		auto name = lowPing->GetPlayerName();
-		if (name.IsEmpty())
-		{
-			name = "NewHost";
-		}
-
-		lowPing->SetMigrationInfo({true, name,mapname,gameStarted});
-		host->SaveBeforeExit();
-		
-		GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "Found low ping "+ mapname);
-	}
-
-	//Cast<AMyPlayerState>(UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetPlayerState<AMyPlayerState>())->SaveBeforeExit();
-
-}
-
-
-
-void UMyGameInstance::BindAltF4(bool on)
-{
-	UGameViewportClient* viewPortClient = GetGameViewportClient();
-
-	if (on)
-	{
-		if (viewPortClient)
-		{
-			if (viewPortClient->OnWindowCloseRequested().IsBound())
-			{
-				viewPortClient->OnWindowCloseRequested().Unbind();
-			}
-			viewPortClient->OnWindowCloseRequested().BindLambda([&]()->bool
-				{	
-					CheckOpenPublicConnection(false);
-					FindLowestPingAndNotify();
-					_exitRequest = true;
-					FTimerHandle delay;
-					GetTimerManager().SetTimer(delay, FTimerDelegate::CreateLambda([&]() {DestroySession(); }), 1.5, false);			
-					return false;
-				});
-		}
-	}
-	else
-	{
-		if (viewPortClient)
-		{
-			if (viewPortClient->OnWindowCloseRequested().IsBound())
-			{
-				viewPortClient->OnWindowCloseRequested().Unbind();
-			}
-			viewPortClient->OnWindowCloseRequested().BindLambda([&]()->bool {return true; });
-		}
-	}
-}
+//void UMyGameInstance::BindAltF4(bool on)
+//{
+//	UGameViewportClient* viewPortClient = GetGameViewportClient();
+//
+//	if (on)
+//	{
+//		if (viewPortClient)
+//		{
+//			if (viewPortClient->OnWindowCloseRequested().IsBound())
+//			{
+//				viewPortClient->OnWindowCloseRequested().Unbind();
+//			}
+//			viewPortClient->OnWindowCloseRequested().BindLambda([&]()->bool
+//				{	
+//					CheckOpenPublicConnection(false);
+//					FindLowestPingAndNotify();
+//					_exitRequest = true;
+//					FTimerHandle delay;
+//					GetTimerManager().SetTimer(delay, FTimerDelegate::CreateLambda([&]() {DestroySession(); }), 1.5, false);			
+//					return false;
+//				});
+//		}
+//	}
+//	else
+//	{
+//		if (viewPortClient)
+//		{
+//			if (viewPortClient->OnWindowCloseRequested().IsBound())
+//			{
+//				viewPortClient->OnWindowCloseRequested().Unbind();
+//			}
+//			viewPortClient->OnWindowCloseRequested().BindLambda([&]()->bool {return true; });
+//		}
+//	}
+//}
 
 
 FString UMyGameInstance::GetMyIpAddress()
@@ -870,26 +844,12 @@ void UMyGameInstance::OnReadProcessRequestComplete(FHttpRequestPtr request, FHtt
 	}
 	else
 	{
-		limit--;
-		if (limit == 3)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
-			ReadMasterServerInfo("http://172.30.1.43:8335/"); // My Lan IP
-		}
-		else if (limit == 2)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
-			ReadMasterServerInfo("https://localhost:44333/"); // My Lan IP
-		}
-		else if (limit == 1)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
-			ReadMasterServerInfo("https://127.0.0.1:44333/"); // My Lan IP
-		}
-		else
-		{
-			_lanCheck = true;
-		}
+
+		UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
+		ReadMasterServerInfo("https://localhost:44333/");
+		//ReadMasterServerInfo("http://172.30.1.4:8335/"); //  IP
+		//ReadMasterServerInfo("http://192.168.35.82:8335/"); // My Lan IP
+		//ReadMasterServerInfo("http://172.30.1.43:8335/"); 
 	}
 
 
@@ -898,8 +858,6 @@ void UMyGameInstance::OnReadProcessRequestComplete(FHttpRequestPtr request, FHtt
 
 void UMyGameInstance::OnBranchProcessComplete(FHttpRequestPtr request, FHttpResponsePtr response, bool success)
 {
-	static int limit = 4;
-
 	if (success)
 	{
 		FString masterServerInfo = response->GetContentAsString();
@@ -939,26 +897,11 @@ void UMyGameInstance::OnBranchProcessComplete(FHttpRequestPtr request, FHttpResp
 	}
 	else
 	{
-		limit--;
-		if (limit == 3)
-		{
 			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
-			InitializeBranch("http://172.30.1.43:8335/"); // My Lan IP
-		}
-		else if (limit == 2)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
-			InitializeBranch("https://localhost:44333/"); // My Lan IP
-		}
-		else if (limit == 1)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
-			InitializeBranch("https://127.0.0.1:44333/"); // My Lan IP
-		}
-		else
-		{
-			_lanCheck = true;
-		}
+			InitializeBranch("https://localhost:44333/");
+			//InitializeBranch("http://172.30.1.4:8335/"); // My Lan IP
+			//InitializeBranch("http://192.168.35.82:8335/"); // My Lan IP
+			//InitializeBranch("http://172.30.1.43:8335/"); // My Lan IP
 	}
 }
 

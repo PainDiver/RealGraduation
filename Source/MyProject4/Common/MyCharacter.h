@@ -176,6 +176,10 @@ private:
 	UFUNCTION(Server,Reliable)
 	void DelayParkour();
 
+	UFUNCTION(Server, Reliable)
+	void ClimbWall(const FVector& vec);
+
+
 	//Initial Value
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Attack")
 	TSubclassOf<class AMyWeapon> _defaultWeaponClass;

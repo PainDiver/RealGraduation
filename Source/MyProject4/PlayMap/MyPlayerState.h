@@ -49,10 +49,6 @@ public:
 		bool _allMightyMode;
 
 
-
-
-
-
 	UFUNCTION(Server, Reliable)
 		void SetCharacterInfo_Server(const FCharacterInfo& info);
 
@@ -62,32 +58,8 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 		void OnRep_InitializeColorAndNotifyConnection_Multi();
 
-
 	UFUNCTION(Server, Reliable)
 		void NotifyConnection();
 
-	//UFUNCTION(Client, Reliable)
-	//void BuildSessionForMigration();
-
-	//UFUNCTION(Client, Reliable)
-	//void ClientMigration();
-
-	UFUNCTION(Client, Reliable)
-	void OnRep_ServerMigration();
-
-	UFUNCTION(Server,Reliable)
-	void SetMigrationInfo(const FMigrationPacket& info);
-
-	inline FMigrationPacket GetMigrationInfo() { return _migrationInfo; }
-
-	UFUNCTION(NetMulticast,Reliable)
-	void SaveBeforeExit();
-
-private:
-	UPROPERTY()
-	class UMySaveGame* _saveGameInstance;
-
-	UPROPERTY(replicatedUsing = OnRep_ServerMigration)
-	FMigrationPacket _migrationInfo;
 
 };
