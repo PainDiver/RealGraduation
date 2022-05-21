@@ -32,7 +32,6 @@ AMyReadyRoomGameModeBase::AMyReadyRoomGameModeBase()
 	PlayerControllerClass = AReadyRoomPlayerController::StaticClass();
 	PlayerStateClass = AMyPlayerState::StaticClass();
 	GameStateClass = AReadyRoomGameStateBase::StaticClass();
-	DefaultPawnClass = AMyCharacter::StaticClass();
 	
 }
 
@@ -61,12 +60,6 @@ void AMyReadyRoomGameModeBase::Tick(float DeltaTimer)
 
 void AMyReadyRoomGameModeBase::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
-	_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
-	if (!(_gameInstance->CheckOpenPublicConnection(true)))
-	{
-		return;
-	}
-	
 	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
 }
 
@@ -118,17 +111,6 @@ void AMyReadyRoomGameModeBase::Logout(AController* Exiting)
 				gameStateBase->SetIsStartable(false);
 		}
 	}
-
-
-	if (!Exiting->GetNetOwningPlayer())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Leaving Map Start"));
-		_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
-		_gameInstance->CheckOpenPublicConnection(false);
-		GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "exiting");
-		UE_LOG(LogTemp, Warning, TEXT("Leaving Map Done"));
-	}
-	
 
 	Super::Logout(Exiting);
 }

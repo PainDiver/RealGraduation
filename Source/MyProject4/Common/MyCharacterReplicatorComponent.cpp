@@ -39,6 +39,7 @@ void UMyCharacterReplicatorComponent::TickComponent(float DeltaTime, ELevelTick 
 
 void UMyCharacterReplicatorComponent::Respawn_Implementation()
 {
+	_owner->SetReplicateMovement(true);
 	_owner->SetActorLocation(_respawn);
 	_owner->GetCharacterMovement()->Velocity = FVector(0.f);
 }

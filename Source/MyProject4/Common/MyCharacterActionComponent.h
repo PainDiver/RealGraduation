@@ -104,7 +104,8 @@ private:
 	UFUNCTION(Server,Reliable)
 	void Greet(bool Input);
 
-
+	UFUNCTION(NetMulticast, Reliable)
+	void Greet_Multi();
 
 	void AddMoveForward(const float& DeltaTime, const float& Input);
 

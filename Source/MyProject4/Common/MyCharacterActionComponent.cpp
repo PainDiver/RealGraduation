@@ -202,12 +202,17 @@ void UMyCharacterActionComponent::Greet_Implementation(bool Input)
 	{
 		return;
 	}
-	_owner->_characterMovementComponent->MaxWalkSpeed = 200;
-
 	UE_LOG(LogTemp, Warning, TEXT("greeting"));
 	_bIsGreeting = true;
 
+	Greet_Multi();
 }
+
+void UMyCharacterActionComponent::Greet_Multi_Implementation()
+{
+	_owner->_characterMovementComponent->MaxWalkSpeed = 200;
+}
+
 
 void UMyCharacterActionComponent::AddMoveForward(const float& DeltaTime, const float& Input)
 {

@@ -34,12 +34,18 @@ void AReadyRoomPlayerController::BeginPlay()
 void AReadyRoomPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	InputComponent->BindAction(TEXT("Chat"), IE_Pressed, this, &AReadyRoomPlayerController::ShowChattingPannel);
+	if (InputComponent)
+	{
+		InputComponent->BindAction(TEXT("Chat"), IE_Pressed, this, &AReadyRoomPlayerController::ShowChattingPannel);
+	}
 }
 
 void AReadyRoomPlayerController::PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel)
 {
-	InputComponent->ClearActionBindings();
+	if (InputComponent)
+	{
+		InputComponent->ClearActionBindings();
+	}
 	if (IsLocalPlayerController())
 	{
 		TArray<UUserWidget*> widgets;
@@ -60,8 +66,8 @@ void AReadyRoomPlayerController::PreClientTravel(const FString& PendingURL, ETra
 
 void AReadyRoomPlayerController::commit_Implementation(const FString& message)
 {
-	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, TEXT("Commit in ReadyRoom!"));
+	//if (GEngine)
+	//	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, TEXT("Commit in ReadyRoom!"));
 
 	if (!message.IsEmpty())
 	{
@@ -85,8 +91,16 @@ void AReadyRoomPlayerController::commit_Implementation(const FString& message)
 		{
 			if (_chattingPannel)
 			{
-				_chattingPannel->GetCachedWidget()->SetRenderOpacity(_chattingPannel->GetCachedWidget()->GetRenderOpacity() - 0.05);
-				if (_chattingPannel->GetCachedWidget()->GetRenderOpacity() < 0)
+				auto cachedWidget = _chattingPannel->GetCachedWidget();
+				if (cachedWidget)
+				{
+					cachedWidget->SetRenderOpacity(cachedWidget->GetRenderOpacity() - 0.05);
+					if (cachedWidget->GetRenderOpacity() < 0)
+					{
+						GetWorldTimerManager().ClearTimer(_timerHandle);
+					}
+				}
+				else
 				{
 					GetWorldTimerManager().ClearTimer(_timerHandle);
 				}
@@ -107,7 +121,13 @@ void AReadyRoomPlayerController::ShowChatBox()
 	}
 
 	if (_chattingPannel)
-		_chattingPannel->GetCachedWidget()->SetRenderOpacity(1);
+	{
+		auto cachedWidget = _chattingPannel->GetCachedWidget();
+		if (cachedWidget)
+		{
+			cachedWidget->SetRenderOpacity(1);
+		}
+	}
 }
 
 
@@ -154,20 +174,6 @@ void AReadyRoomPlayerController::Initialize()
 	{
 		return;
 	}
-
-	if (GetWorld()->IsServer())
-	{
-		if (_MapSelectionHUDAsset)
-		{
-			auto mapSelection = CreateWidget<UUserWidget>(this, _MapSelectionHUDAsset);
-			if (mapSelection)
-			{
-				mapSelection->SetVisibility(ESlateVisibility::Visible);
-				mapSelection->AddToViewport(1);
-			}
-		}
-	}
-
 	
 	if (_gameInstance->_readyHUDAsset)
 	{
@@ -191,38 +197,6 @@ void AReadyRoomPlayerController::Initialize()
 			_ChattingHUDOverlay->AddToViewport();
 			_chattingPannel = _ChattingHUDOverlay->GetRootWidget();
 		}
-	}
-
-	if (GetLocalRole() == ROLE_Authority)
-	{
-		if (_gameInstance->_startHUDAsset)
-		{
-			if (!_StartHUDOverlay)
-			{
-				_StartHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_startHUDAsset);
-				_StartHUDOverlay->SetVisibility(ESlateVisibility::Visible);
-				_StartHUDOverlay->AddToViewport(100);
-			}
-		}
-
-		GetWorld()->GetTimerManager().SetTimer(_timerHandle2, FTimerDelegate::CreateLambda([&]()
-			{
-				if (_StartHUDOverlay)
-				{
-					if (_gameState->GetIsStartable())
-					{
-
-						if (_StartHUDOverlay->GetVisibility() == ESlateVisibility::Hidden)
-							_StartHUDOverlay->SetVisibility(ESlateVisibility::Visible);
-					}
-					else
-					{
-						if (_StartHUDOverlay->GetVisibility() == ESlateVisibility::Visible)
-							_StartHUDOverlay->SetVisibility(ESlateVisibility::Hidden);
-					}
-				}
-			}
-		), 2.f, true, 0);
 	}
 
 	_bChattable = true;

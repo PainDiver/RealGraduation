@@ -78,10 +78,15 @@ public:
 
 	class UScrollBox* _WinnerScrollBox;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UObject* _font;
 
 	FString _messageSent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 	FTimerHandle _timerHandle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 	FTimerHandle _timerHandle2;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

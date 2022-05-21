@@ -30,9 +30,10 @@ void AMyScoreMapGameStateBase::FindAllPlayerControllerHideAllWidget_Implementati
 	for (auto playerController : OutActors)
 	{
 		AMyScoreMapPlayerController* pc = Cast<AMyScoreMapPlayerController>(playerController);
-
-		pc->GetWorldTimerManager().ClearTimer(pc->_timerHandle);
-		pc->GetWorldTimerManager().ClearTimer(pc->_timerHandle2);
+		if (pc)
+		{
+			GetWorld()->GetTimerManager().ClearAllTimersForObject(pc);
+		}
 	}
 
 	HideAllWidget();
@@ -60,7 +61,7 @@ void AMyScoreMapGameStateBase::FindAllPlayerControllerOpenAllWidget_Implementati
 	for (auto playerController : OutActors)
 	{
 		AMyScoreMapPlayerController* pc = Cast<AMyScoreMapPlayerController>(playerController);
-		if (pc->_ChattingHUDOverlay)
+		if (pc&&pc->_ChattingHUDOverlay)
 		{
 			pc->_ChattingHUDOverlay->SetVisibility(ESlateVisibility::Visible);
 		}

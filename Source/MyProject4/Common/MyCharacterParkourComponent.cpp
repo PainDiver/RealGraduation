@@ -71,7 +71,7 @@ void UMyCharacterParkourComponent::WallRunRight_Multi_Implementation()
 	}
 
 	auto characterLoc = _character->GetActorLocation();
-	auto characterRightVector = _character->GetActorRightVector() * 100.f;
+	auto characterRightVector = _character->GetActorRightVector() * 150.f;
 	auto characterForwardVector = _character->GetActorForwardVector() * -25.f;
 
 	auto rayEnd = characterLoc + characterRightVector + characterForwardVector;
@@ -85,14 +85,15 @@ void UMyCharacterParkourComponent::WallRunRight_Multi_Implementation()
 		return;
 	}
 
-	if (_character->HasAuthority())
-	{
-		WallRunningServerCheck(true);
+	auto previousVelocity = _movementComponent->Velocity;
+	_movementComponent->Velocity = { previousVelocity.X, previousVelocity.Y, 0 };
+	_wallNormal = hitResult.ImpactNormal;
+	_movementComponent->GravityScale = 0.05f;
 
-		_wallNormal = hitResult.ImpactNormal;
-		_movementComponent->GravityScale = 0.05f;
-		auto previousVelocity = _movementComponent->Velocity;
-		_movementComponent->Velocity = { previousVelocity.X, previousVelocity.Y, 0 };
+	//_character->SetReplicateMovement(false);
+	
+	WallRunningServerCheck(true);
+
 
 		GetWorld()->GetTimerManager().SetTimer(_wallRunningRightTimer, FTimerDelegate::CreateLambda(
 			[&]()
@@ -104,7 +105,7 @@ void UMyCharacterParkourComponent::WallRunRight_Multi_Implementation()
 				else
 				{
 					auto characterLoc = _character->GetActorLocation();
-					auto characterRightVector = _character->GetActorRightVector() * 100.f;
+					auto characterRightVector = _character->GetActorRightVector() * 150.f;
 					auto characterForwardVector = _character->GetActorForwardVector() * -25.f;
 					auto characterUpVector = _character->GetActorUpVector() * -100.f;
 
@@ -113,9 +114,18 @@ void UMyCharacterParkourComponent::WallRunRight_Multi_Implementation()
 					FHitResult hitResult;
 					bool wallCheck = GetWorld()->LineTraceSingleByChannel(hitResult, characterLoc, rayEnd, ECollisionChannel::ECC_Visibility);
 					//DrawDebugLine(GetWorld(), characterLoc, rayEnd, FColor(255, 0, 0), false, 10.f);
+					
+					/*if (_character->IsLocallyControlled())
+					{
+						_character->CorrectLocation_Server(_character->GetActorLocation());
+					}*/
+
 					if (!wallCheck || !_movementComponent->IsFalling() || _movementComponent->Velocity.Size() < 300.f)
 					{
-						StopWallRunning();
+						if (_character->IsLocallyControlled())
+						{
+							StopWallRunning(_character->GetActorLocation());
+						}
 						GetWorld()->GetTimerManager().ClearTimer(_wallRunningRightTimer);
 					}
 					else
@@ -124,9 +134,10 @@ void UMyCharacterParkourComponent::WallRunRight_Multi_Implementation()
 					}
 				}
 			}
-		), 0.05f, true);
-	}
-	_character->GetMesh()->SetRelativeRotation(FRotator(0, 0, -60));
+		), 0.2f, true);
+	
+
+	_character->GetMesh()->SetRelativeRotation(FRotator(0, 0, -30));
 
 	//if (_character->HasAuthority())
 	//{
@@ -141,10 +152,10 @@ void UMyCharacterParkourComponent::WallRunRight_Multi_Implementation()
 	if (_character->IsLocallyControlled())
 	{
 		auto Rot = _camera->GetRelativeRotation();
-		Rot.Roll = -60.0f;
+		Rot.Roll = -30.0f;
 		FLatentActionInfo LatentInfo3;
 		LatentInfo3.CallbackTarget = this;
-		UKismetSystemLibrary::MoveComponentTo(_camera, _camera->GetRelativeLocation(), Rot, true, true, 0.1f, false, EMoveComponentAction::Move, LatentInfo3);
+		UKismetSystemLibrary::MoveComponentTo(_camera, _camera->GetRelativeLocation(), Rot, true, true, 0.0f, false, EMoveComponentAction::Move, LatentInfo3);
 	}
 
 }
@@ -162,10 +173,11 @@ void UMyCharacterParkourComponent::WallRunLeft_Multi_Implementation()
 	}
 
 	auto characterLoc = _character->GetActorLocation();
-	auto characterRightVector = _character->GetActorRightVector() * -100.f;
+	auto characterRightVector = _character->GetActorRightVector() * -150.f;
 	auto characterForwardVector = _character->GetActorForwardVector() * -25.f;
 
 	auto rayEnd = characterLoc + characterRightVector + characterForwardVector;
+
 
 	FHitResult hitResult;
 	bool wallCheck = GetWorld()->LineTraceSingleByChannel(hitResult, characterLoc, rayEnd, ECollisionChannel::ECC_Visibility);
@@ -173,15 +185,15 @@ void UMyCharacterParkourComponent::WallRunLeft_Multi_Implementation()
 	{
 		return;
 	}
+	
+	auto previousVelocity = _movementComponent->Velocity;
+	_movementComponent->Velocity = { previousVelocity.X, previousVelocity.Y, 0 };
+	_wallNormal = hitResult.ImpactNormal;
+	_movementComponent->GravityScale = 0.05f;
 
-	if (_character->HasAuthority())
-	{
-		WallRunningServerCheck(true);
+	//_character->SetReplicateMovement(false);
+	WallRunningServerCheck(true);
 
-		_wallNormal = hitResult.ImpactNormal;
-		_movementComponent->GravityScale = 0.05f;
-		auto previousVelocity = _movementComponent->Velocity;
-		_movementComponent->Velocity = { previousVelocity.X, previousVelocity.Y, 0 };
 
 		GetWorld()->GetTimerManager().SetTimer(_wallRunningRightTimer, FTimerDelegate::CreateLambda(
 			[&]()
@@ -193,17 +205,25 @@ void UMyCharacterParkourComponent::WallRunLeft_Multi_Implementation()
 				else
 				{
 					auto characterLoc = _character->GetActorLocation();
-					auto characterRightVector = _character->GetActorRightVector() * -100.f;
+					auto characterRightVector = _character->GetActorRightVector() * -150.f;
 					auto characterForwardVector = _character->GetActorForwardVector() * -25.f;
 					auto characterUpVector = _character->GetActorUpVector() * -100.f;
 
 					auto rayEnd = characterLoc + characterRightVector + characterForwardVector + characterUpVector;
 
+					/*if (_character->IsLocallyControlled())
+					{
+						_character->CorrectLocation_Server(_character->GetActorLocation());
+					}*/
+
 					FHitResult hitResult;
 					bool wallCheck = GetWorld()->LineTraceSingleByChannel(hitResult, characterLoc, rayEnd, ECollisionChannel::ECC_Visibility);
 					if (!wallCheck || !_movementComponent->IsFalling() || _movementComponent->Velocity.Size() < 300.f)
 					{
-						StopWallRunning();
+						if (_character->IsLocallyControlled())
+						{
+							StopWallRunning(_character->GetActorLocation());
+						}
 						GetWorld()->GetTimerManager().ClearTimer(_wallRunningRightTimer);
 					}
 					else
@@ -212,10 +232,10 @@ void UMyCharacterParkourComponent::WallRunLeft_Multi_Implementation()
 					}
 				}
 			}
-		), 0.05f, true);
+		), 0.2f, true);
 
-	}
-	_character->GetMesh()->SetRelativeRotation(FRotator(0, 0, 60));
+	
+	_character->GetMesh()->SetRelativeRotation(FRotator(0, 0, 30));
 
 	//if (_character->HasAuthority())
 	//{
@@ -231,13 +251,14 @@ void UMyCharacterParkourComponent::WallRunLeft_Multi_Implementation()
 		FLatentActionInfo LatentInfo2;
 		LatentInfo2.CallbackTarget = this;
 		auto Rot = _camera->GetRelativeRotation();
-		Rot.Roll = 60.0f;
-		UKismetSystemLibrary::MoveComponentTo(_camera, _camera->GetRelativeLocation(), Rot, true, true, 0.1f, false, EMoveComponentAction::Move, LatentInfo2);
+		Rot.Roll = 30.0f;
+		UKismetSystemLibrary::MoveComponentTo(_camera, _camera->GetRelativeLocation(), Rot, true, true, 0.0f, false, EMoveComponentAction::Move, LatentInfo2);
 	}
 }
 
-void UMyCharacterParkourComponent::StopWallRunning_Implementation()
+void UMyCharacterParkourComponent::StopWallRunning_Implementation(const FVector& loc)
 {
+	//_character->SetActorLocation(loc);
 	StopWallRunning_Multi();
 	_bIsWallRunning = false;
 }
@@ -247,6 +268,7 @@ void UMyCharacterParkourComponent::StopWallRunning_Multi_Implementation()
 	_movementComponent->GravityScale = 1.0f;
 
 	_character->GetMesh()->SetRelativeRotation(FRotator::ZeroRotator);
+	//_character->SetReplicateMovement(true);
 
 	if (_character->HasAuthority())
 	{
@@ -269,7 +291,7 @@ void UMyCharacterParkourComponent::StopWallRunning_Multi_Implementation()
 	}
 }
 
-void UMyCharacterParkourComponent::WallRunningJump_Implementation()
+void UMyCharacterParkourComponent::WallRunningJump_Implementation(const FVector& loc)
 {
 	_movementComponent->Launch(_wallNormal * 500 + FVector{ 0,0,800.f });
 }
@@ -287,9 +309,10 @@ void UMyCharacterParkourComponent::Ledge_Implementation()
 
 void UMyCharacterParkourComponent::Ledge_Multi_Implementation()
 {
+
 	FHitResult hit;
-	FVector start = _character->GetActorLocation();
-	FVector end = _character->GetActorLocation() + _character->GetActorForwardVector() * 200;
+	FVector start = _character->GetActorLocation() - _character->GetActorForwardVector() * -10.f;
+	FVector end = _character->GetActorLocation() + _character->GetActorForwardVector() * 100 ;
 	bool wallCheck = GetWorld()->LineTraceSingleByChannel(hit, start, end, ECollisionChannel::ECC_Visibility);
 
 	if (!wallCheck)
@@ -305,102 +328,115 @@ void UMyCharacterParkourComponent::Ledge_Multi_Implementation()
 	}
 
 	auto newRot = UKismetMathLibrary::FindLookAtRotation(FVector::ZeroVector, -hit.ImpactNormal);
-	_character->Controller->ClientSetRotation(FRotator(0,newRot.Yaw,0));
-	
-	_movementComponent->Velocity = FVector::ZeroVector;
-	_movementComponent->GravityScale = 0.0f;
-
-
-	if (_character->HasAuthority())
+	if (_character->Controller)
 	{
-		auto dif = hit.Location - _capsuleComponent->GetComponentLocation();
-		FLatentActionInfo latent;
-		latent.CallbackTarget = this;
-		UKismetSystemLibrary::MoveComponentTo(_capsuleComponent, _capsuleComponent->GetRelativeLocation() + dif /1.1f, _capsuleComponent->GetRelativeRotation(), false, false, 0.0f, false, EMoveComponentAction::Move, latent);
+		_character->Controller->ClientSetRotation(FRotator(0, newRot.Yaw, 0));
+	}
 
+	_movementComponent->Velocity = FVector::ZeroVector;
+	_movementComponent->GravityScale = 0.0f;	
+	_capsuleComponent->SetWorldLocation(hit.Location + _character->GetActorForwardVector() * -10.f);
+
+	if (_character->IsLocallyControlled())
+	{
+		_character->SetReplicateMovement(false);
+	}
+
+	if (_character->IsLocallyControlled())
+	{
 		LedgingServerCheck(true);
 		GetWorld()->GetTimerManager().SetTimer(_ledgeTimer, FTimerDelegate::CreateLambda([&]()
 			{
 				if (_bIsledging)
 				{
 					FHitResult hit;
-					FVector start = _character->GetActorLocation();
-					FVector end = _character->GetActorLocation() + _character->GetActorForwardVector() * 200.f;
-					bool wallCheck = GetWorld()->LineTraceSingleByChannel(hit, start, end, ECollisionChannel::ECC_Visibility);
+					FVector start = _character->GetActorLocation() + _character->GetActorForwardVector() * -10.f;
+					FVector end = _character->GetActorLocation() + _character->GetActorForwardVector() * 100;
+					bool frontCheck = GetWorld()->LineTraceSingleByChannel(hit, start, end, ECollisionChannel::ECC_Visibility);
 					
-					_ledgeRightMoveDir = UKismetMathLibrary::Cross_VectorVector(hit.ImpactNormal, _character->GetActorUpVector());
-					_ledgeRightMoveDir.Normalize();
-
-					_ledgeUpMoveDir = UKismetMathLibrary::Cross_VectorVector(_character->GetActorRightVector(),hit.ImpactNormal);
-					_ledgeUpMoveDir.Normalize();
-
 					FHitResult upHit;
 					FVector upStart = _character->GetActorLocation();
-					FVector upEnd = _character->GetActorLocation() + _character->GetActorUpVector() * 150 + _character->GetActorForwardVector() * 300;
+					FVector upEnd = _character->GetActorLocation() + _character->GetActorUpVector() * 150 + _character->GetActorForwardVector() * 200;
 					_upWall = GetWorld()->LineTraceSingleByChannel(upHit, upStart, upEnd, ECollisionChannel::ECC_Visibility);
 
 					FHitResult downHit;
 					FVector downStart = _character->GetActorLocation();
-					FVector downEnd = _character->GetActorLocation() + _character->GetActorUpVector() * -150 + _character->GetActorForwardVector() *300;
+					FVector downEnd = _character->GetActorLocation() + _character->GetActorUpVector() * -100 + _character->GetActorForwardVector() *200;
 					_downWall = GetWorld()->LineTraceSingleByChannel(downHit, downStart, downEnd, ECollisionChannel::ECC_Visibility);
-
 
 					FHitResult leftHit;
 					FVector leftStart = _character->GetActorLocation();
-					FVector leftEnd = _character->GetActorLocation() + _character->GetActorRightVector() * -150 + _character->GetActorForwardVector() * 300;
+					FVector leftEnd = _character->GetActorLocation() + _character->GetActorRightVector() * -100 + _character->GetActorForwardVector() * 200;
 					_leftWall = GetWorld()->LineTraceSingleByChannel(leftHit, leftStart, leftEnd, ECollisionChannel::ECC_Visibility);
-
 
 					FHitResult rightHit;
 					FVector rightStart = _character->GetActorLocation();
-					FVector rightEnd = _character->GetActorLocation() + _character->GetActorRightVector() * 150 + _character->GetActorForwardVector() * 300;
+					FVector rightEnd = _character->GetActorLocation() + _character->GetActorRightVector() * 100 + _character->GetActorForwardVector() * 200;
 					_rightWall = GetWorld()->LineTraceSingleByChannel(rightHit, rightStart, rightEnd, ECollisionChannel::ECC_Visibility);
 				
-					if (!wallCheck /* || _movementComponent->Velocity.Size()>30.f*/)
+					FHitResult feetHit;
+					FVector feetStart = _character->GetActorLocation() + _character->GetActorUpVector() * -30.f;
+					FVector feetEnd = _character->GetActorLocation() + _character->GetActorUpVector() * -100 + _character->GetActorForwardVector() * -100;
+					_feetWall = GetWorld()->LineTraceSingleByChannel(feetHit, feetStart, feetEnd, ECollisionChannel::ECC_Visibility);
+
+					_ledgeRightMoveDir = UKismetMathLibrary::Cross_VectorVector(rightHit.ImpactNormal, _character->GetActorUpVector());
+					_ledgeRightMoveDir.Normalize();
+
+					_ledgeUpMoveDir = UKismetMathLibrary::Cross_VectorVector(_character->GetActorRightVector(), upHit.ImpactNormal);
+					_ledgeUpMoveDir.Normalize();
+
+					_ledgeLeftMoveDir = UKismetMathLibrary::Cross_VectorVector(leftHit.ImpactNormal, -_character->GetActorUpVector());
+					_ledgeLeftMoveDir.Normalize();
+
+					_ledgeDownMoveDir = UKismetMathLibrary::Cross_VectorVector(-_character->GetActorRightVector(), downHit.ImpactNormal);
+					_ledgeDownMoveDir.Normalize();
+
+					if (!frontCheck  || _movementComponent->Velocity.Size()>20.f)
 					{
 						_upWall = false;
 						_downWall = false;
 						_leftWall = false;
 						_rightWall = false;
+						_feetWall = false;
 						UE_LOG(LogTemp, Warning, TEXT("No Wall In Front"));
+						_character->CorrectLocation_Server(_character->GetActorLocation());
 						Unledge();
+						GetWorld()->GetTimerManager().ClearTimer(_ledgeTimer);
 					}
 					else
 					{
-						_newRot = UKismetMathLibrary::FindLookAtRotation(hit.Location, upHit.Location);
-						_newRot.Pitch -= 90.f;
-						_newRot.Roll = 0;
-						_newRot.Yaw = 0;
+						
+						_upRot = UKismetMathLibrary::FindLookAtRotation(_character->GetActorLocation(), upHit.Location);
+						_upRot.Pitch -= 90.f;
+						_upRot.Roll = 0;
+						_upRot.Yaw = 0;
 
-						if ((start - upHit.Location).Size() < (start - hit.Location).Size())
+						if (_upRot.Pitch  < 0.0f)
 						{
-							_newRot.Pitch = 0.0f;
+							_upRot.Pitch = 0.0f;
 						}
-
-						_newRot += _character->GetMesh()->GetRelativeRotation();
-
+						_upRot += _character->GetMesh()->GetRelativeRotation();
 					}
 				}}),
-			0.05, true);
+			0.05f, true);
 	}
 }
 
 void UMyCharacterParkourComponent::LedgeJump_Implementation()
 {
-	GetWorld()->GetTimerManager().ClearTimer(_ledgeTimer);
 	Unledge();
 	LedgeJump_Multi();
-	_movementComponent->Launch(FVector(0,0,600));
 }
 
 void UMyCharacterParkourComponent::LedgeJump_Multi_Implementation()
 {
+	GetWorld()->GetTimerManager().ClearTimer(_ledgeTimer);
 	_movementComponent->GravityScale = 1.0f;
+	_movementComponent->Launch(FVector(0, 0, 600));
 }
 
 void UMyCharacterParkourComponent::Unledge_Implementation()
 {
-	GetWorld()->GetTimerManager().ClearTimer(_ledgeTimer);
 	Unledge_Multi();
 }
 
@@ -408,13 +444,15 @@ void UMyCharacterParkourComponent::Unledge_Multi_Implementation()
 {
 	if (_bIsledging)
 	{
-		_character->GetMesh()->SetRelativeRotation(FRotator(0, 0, 0));
-
-		_character->bUseControllerRotationYaw = true;
-		if (_character->HasAuthority())
+		if (_character->IsLocallyControlled())
 		{
 			LedgingServerCheck(false);
+			_character->SetReplicateMovement(true);
 		}
+		_capsuleComponent->SetRelativeRotation(FRotator(0, 0, 0));
+
+		_character->bUseControllerRotationYaw = true;
+
 		_movementComponent->GravityScale = 1.0f;
 		
 		if (_character->IsLocallyControlled())
@@ -529,20 +567,15 @@ void UMyCharacterParkourComponent::RegenerateGage(float deltaTime)
 
 void UMyCharacterParkourComponent::Glide_Implementation()
 {
-	if (!_bIsGliding)
-	{
-		_bIsGliding = true;
-		Glide_Multi();
-	}
+	_bIsGliding = true;
+	Glide_Multi();
 }
 
 void UMyCharacterParkourComponent::Glide_Multi_Implementation()
 {
 	if (_character->IsLocallyControlled())
 	{
-		FLatentActionInfo latent;
-		latent.CallbackTarget = this;
-		UKismetSystemLibrary::MoveComponentTo(_springArm, FVector(-400, 0, 0), FRotator(0, 0, 0), true, true, 0.2f, false, EMoveComponentAction::Move, latent);
+		_springArm->SetRelativeLocation(FVector( - 400, 0, 0));
 	}
 	_character->_glide->SetVisibility(true);
 
@@ -564,9 +597,7 @@ void UMyCharacterParkourComponent::UnGlide_Multi_Implementation()
 {
 	if (_character->IsLocallyControlled())
 	{
-		FLatentActionInfo latent;
-		latent.CallbackTarget = this;
-		UKismetSystemLibrary::MoveComponentTo(_springArm, FVector(0, 0, 50), FRotator(0, 0, 0), true, true, 0.2f, false, EMoveComponentAction::Move, latent);
+		_springArm->SetRelativeLocation(FVector(0,0,50));
 	}
 	_character->_glide->SetVisibility(false);
 
@@ -594,17 +625,8 @@ void UMyCharacterParkourComponent::GetLifetimeReplicatedProps(TArray< FLifetimeP
 	DOREPLIFETIME(UMyCharacterParkourComponent, _bIsSprinting);
 	DOREPLIFETIME(UMyCharacterParkourComponent, _bIsGliding);
 
-	DOREPLIFETIME(UMyCharacterParkourComponent, _ledgeRightMoveDir);
-	DOREPLIFETIME(UMyCharacterParkourComponent, _ledgeUpMoveDir);
-
-	DOREPLIFETIME(UMyCharacterParkourComponent, _upWall);
-	DOREPLIFETIME(UMyCharacterParkourComponent, _downWall);
-	DOREPLIFETIME(UMyCharacterParkourComponent, _leftWall);
-	DOREPLIFETIME(UMyCharacterParkourComponent, _rightWall);
-
 	DOREPLIFETIME(UMyCharacterParkourComponent, _ledgeUp);
 	DOREPLIFETIME(UMyCharacterParkourComponent, _ledgeRight);
 
-	DOREPLIFETIME(UMyCharacterParkourComponent, _newRot);
 }
 

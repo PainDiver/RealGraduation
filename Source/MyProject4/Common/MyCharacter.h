@@ -40,10 +40,13 @@ public:
 	virtual void OnJumped();
 	//Initial Function
 	
+
+	UFUNCTION(Client, Reliable,BlueprintCallable)
+		void SetController_Client(bool signal);
+
 	UFUNCTION(Server,Reliable)
 	void SpawnDefaultWeapon();
 	
-
 	//setter getter
 	UFUNCTION(BlueprintCallable)
 	void SetActionComponent(UMyCharacterActionComponent* ac) {_actionComponent = ac;}
@@ -86,26 +89,25 @@ public:
 		void SetColor_Multi(const FLinearColor& color);
 
 
+	void FlyUp_AllMighty(float value);
 
-	UFUNCTION(Server, Reliable)
-		void FlyUp_AllMighty_Server(float value);
+	void MoveForward_AllMighty(float value);
 
-	UFUNCTION(NetMulticast, Reliable)
-		void FlyUp_AllMighty_Multi(float value);
-
-
-	UFUNCTION(Server, Reliable)
-		void MoveForward_AllMighty_Server(float value);
-
-	UFUNCTION(NetMulticast, Reliable)
-		void MoveForward_AllMighty_Multi(float value);
+	void MoveRight_AllMighty(float value);
 
 
 	UFUNCTION(Server, Reliable)
-		void MoveRight_AllMighty_Server(float value);
+		void CorrectLocation_Server(const FVector& loc);
 
 	UFUNCTION(NetMulticast, Reliable)
-		void MoveRight_AllMighty_Multi(float value);
+		void CorrectLocation_Multi(const FVector& loc);
+
+	UFUNCTION(Server, Reliable)
+		void SetSpeed_Server(const float& speed);
+
+	UFUNCTION(NetMulticast, Reliable)
+		void SetSpeed_Multi(const float& speed);
+
 
 	void AllMightyModeBinding();
 
@@ -179,6 +181,10 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ClimbWall(const FVector& vec);
 
+	UFUNCTION(NetMulticast, Reliable)
+		void ClimbWall_Multi(const FVector& vec);
+
+
 
 	//Initial Value
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), Category = "Attack")
@@ -194,7 +200,7 @@ private:
 
 	AActor* _target;
 
-	
+	FVector _clientLocationForAllmightyMode;
 
 	//Components
 };

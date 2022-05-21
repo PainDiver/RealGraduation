@@ -92,7 +92,7 @@ void AMyWorldTimer::NotifyArrival_Implementation()
 	SaveWinnerInfo();
 	TurnOnSpectateUI();
 
-	if (_gameMode->GetNumOfFinished() == 0)
+	if (_gameMode->GetNumOfFinished() <= 2)
 	{
 		_playerState->_IsFirst = true;
 		if (_playerState->_IsFirst)
@@ -257,6 +257,77 @@ void AMyWorldTimer::InitializeHUD()
 			}
 		}
 
+		
+		if (_gameInstance->_alarmUIHUDAsset)
+		{
+			 _alarmUIHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_alarmUIHUDAsset);
+			if (_alarmUIHUDOverlay)
+			{
+				_alarmUIHUDOverlay->SetVisibility(ESlateVisibility::Visible);
+				_alarmUIHUDOverlay->AddToViewport();
+			}
+		}
+
+		if (_gameInstance->_gaugeUIHUDAsset)
+		{
+			auto gauge = CreateWidget<UUserWidget>(this, _gameInstance->_gaugeUIHUDAsset);
+			if (gauge)
+			{
+				gauge->SetVisibility(ESlateVisibility::Visible);
+				gauge->AddToViewport();
+			}
+		}
+
+		if (_gameInstance->_crosshairUIHUDAsset)
+		{
+			auto crosshair = CreateWidget<UUserWidget>(this, _gameInstance->_crosshairUIHUDAsset);
+			if (crosshair)
+			{
+				crosshair->SetVisibility(ESlateVisibility::Visible);
+				crosshair->AddToViewport();
+			}
+		}
+		if (_gameInstance->_characterStateUIHUDAsset)
+		{
+			auto state = CreateWidget<UUserWidget>(this, _gameInstance->_characterStateUIHUDAsset);
+			if (state)
+			{
+				state->SetVisibility(ESlateVisibility::Visible);
+				state->AddToViewport();
+			}
+		}
+
+		if (_gameInstance->_minimapUIHUDAseet)
+		{
+			auto minimap = CreateWidget<UUserWidget>(this, _gameInstance->_minimapUIHUDAseet);
+			if (minimap)
+			{
+				minimap->SetVisibility(ESlateVisibility::Visible);
+				minimap->AddToViewport();
+			}
+		}
+
+		if (_gameInstance->_realtimeRankUIHUDAsset)
+		{
+			_realtimeRankUIHUDOverlay = CreateWidget<UUserWidget>(this, _gameInstance->_realtimeRankUIHUDAsset);
+			if (_realtimeRankUIHUDOverlay)
+			{
+				_realtimeRankUIHUDOverlay->SetVisibility(ESlateVisibility::Visible);
+				_realtimeRankUIHUDOverlay->AddToViewport();
+			}
+		}
+		if (_gameInstance->_gameTimerUIHUDAsset)
+		{
+			auto gameTimer = CreateWidget<UUserWidget>(this, _gameInstance->_gameTimerUIHUDAsset);
+			if (gameTimer)
+			{
+				gameTimer->SetVisibility(ESlateVisibility::Visible);
+				gameTimer->AddToViewport();
+			}
+		}
+		
+
+
 
 		GetWorldTimerManager().SetTimer(UpdateHandle, this, &AMyWorldTimer::UpdateHUD, 0.2, true, 0.2);
 		SetInputMode(FInputModeUIOnly());
@@ -300,11 +371,15 @@ void AMyWorldTimer::AllMightyMode_Implementation()
 			return;
 	}
 	_character->GetCapsuleComponent()->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
+	_character->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
 	_character->GetCharacterMovement()->GravityScale = 0.0f;
-	_character->GetCharacterMovement()->DisableMovement();
+	_character->GetCharacterMovement()->MaxAcceleration = 200000.f;
+	
+	_character->GetCharacterMovement()->MaxFlySpeed = 3000.f;
+	//_character->GetCharacterMovement()->DisableMovement();
+	//_character->SetReplicateMovement(false);
 
-
-	GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "AllMighty!");
+	//GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "AllMighty!");
 	ChangeBindAction_AllMighty();
 }
 

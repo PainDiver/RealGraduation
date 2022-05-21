@@ -62,23 +62,36 @@ void AMyGameStateBase::NotifyFin_Implementation()
 	}
 }
 
+void AMyGameStateBase::StopAllController_Server_Implementation()
+{
+	StopAllController_Multi();
+}
+
+
+void AMyGameStateBase::StopAllController_Multi_Implementation()
+{
+	auto controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	if (controller)
+	{
+		controller->DisableInput(controller);
+	}
+}
+
 
 
 void AMyGameStateBase::LetPlayerMove_Implementation()
 {
-	for (auto ps : PlayerArray)
-	{
-		ps->GetOwner<APlayerController>()->SetInputMode(FInputModeGameOnly());
-	}
 	LetPlayerMove_Client();
 }
 
 void AMyGameStateBase::LetPlayerMove_Client_Implementation()
 {
-	for (auto ps : PlayerArray)
+	auto controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	if (controller)
 	{
-		if(ps->GetOwner<APlayerController>())
-			ps->GetOwner<APlayerController>()->SetInputMode(FInputModeGameOnly());
+		controller->EnableInput(controller);
 	}
 }
 

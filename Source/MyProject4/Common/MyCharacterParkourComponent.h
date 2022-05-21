@@ -45,13 +45,13 @@ public:
 		void WallRunLeft_Multi();
 
 	UFUNCTION(Server, Reliable)
-		void StopWallRunning();
+		void StopWallRunning(const FVector& location);
 
 	UFUNCTION(NetMulticast, Reliable)
 		void StopWallRunning_Multi();
 	
 	UFUNCTION(Server, Reliable)
-	void WallRunningJump();
+	void WallRunningJump(const FVector& location);
 
 
 
@@ -102,7 +102,7 @@ public:
 		void Glide_Multi();
 
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Reliable,BlueprintCallable)
 	void UnGlide();
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -114,6 +114,8 @@ public:
 	UFUNCTION(Server, Reliable)
 		void SetLedgeRightMoveDir(float value);
 
+	UPROPERTY(VisibleAnyWhere, BlueprintReadWrite)
+	bool _bUsingInteractable = false;
 
 	UPROPERTY(replicated, BlueprintReadWrite)
 		bool _bIsWallRunning = false;
@@ -134,27 +136,19 @@ public:
 		float _fuel;
 
 
-	UPROPERTY(replicated)
-		FVector _ledgeRightMoveDir;
-
-	UPROPERTY(replicated)
-		FVector _ledgeUpMoveDir;
-
-	UPROPERTY(replicated)
-		FRotator _newRot;
+	FVector _ledgeRightMoveDir;
+	FVector _ledgeUpMoveDir;
+	FVector _ledgeLeftMoveDir;
+	FVector _ledgeDownMoveDir;
+	
+	FRotator _upRot;
 
 
-	UPROPERTY(replicated)
 	bool _upWall=false;
-	UPROPERTY(replicated)
 	bool _downWall=false;
-	UPROPERTY(replicated)
 	bool _leftWall = false;
-	UPROPERTY(replicated)
 	bool _rightWall=false;
-
-
-
+	bool _feetWall = false;
 
 	UPROPERTY(replicated,BlueprintReadWrite)
 	float _ledgeUp;

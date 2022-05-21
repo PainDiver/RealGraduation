@@ -19,7 +19,6 @@ AMyProject4GameModeBase::AMyProject4GameModeBase()
 	PlayerControllerClass = AMyWorldTimer::StaticClass();
 	GameStateClass = AMyGameStateBase::StaticClass();
 	PlayerStateClass = APlayerState::StaticClass();
-	DefaultPawnClass = AMyCharacter::StaticClass();
 	SpectatorClass = AMySpectatorPawn::StaticClass();
 
 	_AIRespawnPoint.X = 500;
@@ -45,6 +44,18 @@ void AMyProject4GameModeBase::BeginPlay()
 	Super::BeginPlay();
 
 	_gameState = GetGameState<AMyGameStateBase>();
+
+	TArray<AActor*> actors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMyCharacter::StaticClass(), actors);
+	for (auto actor : actors)
+	{
+		auto character = Cast<AMyCharacter>(actor);
+		if (character)
+		{
+			character->SetController_Client(false);
+		}
+	}
+
 	GetWorldTimerManager().SetTimer(_timerForCheckConnection, FTimerDelegate::CreateLambda([&]()
 		{
 			_abandonUnconnectedPlayersWithIn -= 0.1;
@@ -159,7 +170,16 @@ void AMyProject4GameModeBase::CountStartTimer(const float& DeltaTime)
 			_gameState->_StartTimer = _StartTimer;
 			if (_StartTimer <= 0)
 			{
-				_gameState->LetPlayerMove();
+				TArray<AActor*> actors;
+				UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMyCharacter::StaticClass(), actors);
+				for (auto actor : actors)
+				{
+					auto character = Cast<AMyCharacter>(actor);
+					if (character)
+					{
+						character->SetController_Client(true);
+					}
+				}
 				_bIsStarted = true;
 			}
 		}

@@ -92,14 +92,39 @@ void AMyPlatForm::Transform_Multi_Implementation(float delta)
 		break;
 	}
 
-	case EPlatFormType::EPF_TranslatingPlatform:
+	case EPlatFormType::EPF_TranslatingPlatform01:
 	{
 		FVector dx(_speed * delta, 0, 0);
+
 		if (_toggle)
 		{
 			dx = -dx;
 		}
 		AddActorWorldOffset(dx);
+		break;
+	}
+
+	case EPlatFormType::EPF_TranslatingPlatform02:
+	{
+		FVector dy(0, _speed * delta, 0);
+
+		if (_toggle)
+		{
+			dy = -dy;
+		}
+		AddActorWorldOffset(dy);
+		break;
+	}
+
+	case EPlatFormType::EPF_TranslatingPlatform03:
+	{
+		FVector dz(0, 0, _speed * delta);
+
+		if (_toggle)
+		{
+			dz = -dz;
+		}
+		AddActorWorldOffset(dz);
 		break;
 	}
 

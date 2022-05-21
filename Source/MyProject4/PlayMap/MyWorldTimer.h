@@ -12,12 +12,12 @@
 
 /*
 FTimerHandle WaitHandle;
-float WaitTime; //½Ã°£À» ¼³Á¤ÇÏ°í
+float WaitTime; //ì‹œê°„ì„ ì„¤ì •í•˜ê³ 
 GetWorld()->GetTimerManager().SetTimer(WaitHandle, FTimerDelegate::CreateLambda([&]()
 	{
-		// ¿©±â¿¡ ÄÚµå¸¦ Ä¡¸é µÈ´Ù.
-	}), WaitTime, false); //¹İº¹µµ ¿©±â¼­ Ãß°¡ º¯¼ö¸¦ ¼±¾ğÇØ ¼³Á¤°¡´É
-		delay °£ÆíÇÔ¼ö 
+		// ì—¬ê¸°ì— ì½”ë“œë¥¼ ì¹˜ë©´ ëœë‹¤.
+	}), WaitTime, false); //ë°˜ë³µë„ ì—¬ê¸°ì„œ ì¶”ê°€ ë³€ìˆ˜ë¥¼ ì„ ì–¸í•´ ì„¤ì •ê°€ëŠ¥
+		delay ê°„í¸í•¨ìˆ˜ 
 */
 
 
@@ -69,29 +69,35 @@ public:
 		FSlateBrush _defaultImage;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widgets")
 		UUserWidget* _FinalTimerHUDOverlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widgets")
 		UUserWidget* _SpectateHUDOverlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widgets")
 		UUserWidget* _inventoryHUDOverlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widgets")
 		UUserWidget* _GameOverHUDOverlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widgets")
 		UUserWidget* _StartTimerHUDOverlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widgets")
 		UUserWidget* _UIHUDOverlay;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widgets")
+		UUserWidget* _realtimeRankUIHUDOverlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widgets")
+		UUserWidget* _alarmUIHUDOverlay;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character")
 		class AMyCharacter* _character;
 
-	
+
+
 private:
 
 
@@ -130,7 +136,6 @@ private:
 
 
 	
-
 	TArray<APlayerState*> _playerArray;
 
 	AController* _previous;

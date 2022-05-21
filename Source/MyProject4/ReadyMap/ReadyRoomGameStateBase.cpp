@@ -2,6 +2,7 @@
 
 
 #include "ReadyRoomGameStateBase.h"
+#include "../Common/MyCharacter.h"
 #include "ReadyRoomPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/ScrollBox.h"

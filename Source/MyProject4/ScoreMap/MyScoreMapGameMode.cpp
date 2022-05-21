@@ -18,9 +18,7 @@ AMyScoreMapGameMode::AMyScoreMapGameMode()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PlayerControllerClass = AMyScoreMapPlayerController::StaticClass();
 	GameStateClass = AMyScoreMapGameStateBase::StaticClass();
-	DefaultPawnClass = AMyCharacter::StaticClass();
-
-
+	
 }
 
 // Called when the game starts or when spawned
@@ -48,12 +46,7 @@ void AMyScoreMapGameMode::BeginPlay()
 
 void AMyScoreMapGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
-	_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
-	if (!(_gameInstance->CheckOpenPublicConnection(true)))
-	{
-		return;
-	}
-
+	
 	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
 	
 }
@@ -70,9 +63,12 @@ void AMyScoreMapGameMode::Logout(AController* Exiting)
 	if (!Exiting->GetNetOwningPlayer())
 	{
 		_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
-		_gameInstance->CheckOpenPublicConnection(false);
-		GEngine->AddOnScreenDebugMessage(0, 15, FColor::Blue, "exiting");
 	}
 
 	return Super::Logout(Exiting);
+}
+
+int AMyScoreMapGameMode::GetServerPort()
+{
+	return GetWorld()->URL.Port;
 }

@@ -11,7 +11,9 @@ UENUM(BlueprintType)
 enum class EPlatFormType : uint8
 {
 	EPF_RotatingPlatform	UMETA(DisplayName = "RotatingPlatform"),
-	EPF_TranslatingPlatform	UMETA(DisplayName = "TranslatingPlatform"),
+	EPF_TranslatingPlatform01	UMETA(DisplayName = "TranslatingPlatformX"),
+	EPF_TranslatingPlatform02	UMETA(DisplayName = "TranslatingPlatformY"),
+	EPF_TranslatingPlatform03	UMETA(DisplayName = "TranslatingPlatformZ"),
 	EPF_InvisiblePlatform	UMETA(DisplayName = "InvisiblePlatform"),
 	EPF_MAX					UMETA(DisplayName = "DefaultMax")
 };

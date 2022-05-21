@@ -60,8 +60,10 @@ public:
 
 	bool _bChattable;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 	FTimerHandle _timerHandle;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 	FTimerHandle _timerHandle2;
 
 

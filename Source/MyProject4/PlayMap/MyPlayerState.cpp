@@ -23,10 +23,9 @@ AMyPlayerState::AMyPlayerState()
 void AMyPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
-
-	auto controller = GetOwner<AController>();
-
-	if (controller && controller->IsLocalPlayerController())
+	
+	auto controller = Cast<AController>(GetOwner());
+	if (controller && controller->IsLocalController())
 	{
 		UMyGameInstance* localInstance = Cast<UMyGameInstance>(GetGameInstance());
 		if (!localInstance)
@@ -34,23 +33,8 @@ void AMyPlayerState::BeginPlay()
 			return;
 		}
 		SetCharacterInfo_Server(localInstance->_characterInfo);
-		auto character = Cast<AMyCharacter>(GetOwner());
-		if (!character)
-		{
-			return;
-		}
-		character->SetColor(localInstance->_characterInfo._characterColor);
-		
-		//if (!localInstance->_IsDedicatedServer)
-		//{
-		//	localInstance->BindAltF4(true);
-		//	localInstance->_migration._IsHost = false;
-		//}
 		NotifyConnection();
-		
 	}
-
-
 	UE_LOG(LogTemp, Warning, TEXT("state Okay"));
 }
 
@@ -59,33 +43,6 @@ void AMyPlayerState::SetCharacterInfo_Server_Implementation(const FCharacterInfo
 	_characterInfo = info;
 	_characterInfo.OnRepToggle = !_characterInfo.OnRepToggle;
 	_Initialized = true;
-}
-
-void AMyPlayerState::OnRep_InitializeColorAndNotifyConnection_Implementation()
-{		
-	if (GetWorld()->IsServer())
-	{
-		OnRep_InitializeColorAndNotifyConnection_Multi();
-	}
-}
-
-void AMyPlayerState::OnRep_InitializeColorAndNotifyConnection_Multi_Implementation()
-{
-	auto character = Cast<AMyCharacter>(GetOwner());
-	if (!character)
-	{
-		return;
-	}
-	
-	auto ps = Cast<AMyPlayerState>(character->GetPlayerState());
-	
-	if (!ps)
-	{
-		return;
-	}
-	//character->SetColor(FColor::Blue);
-	character->SetColor(ps->_characterInfo._characterColor);
-	
 }
 
 
@@ -101,6 +58,13 @@ void AMyPlayerState::NotifyConnection_Implementation()
 	}
 
 	AMyGameStateBase* gsb = world->GetGameState<AMyGameStateBase>();
+	//this will not occur unless it's game map.
+	if (GetWorld()->GetName().Equals("ServerMap"))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("NotifyConnection Skipped"));
+		return;
+	}
+	
 	if (gsb)
 	{
 		gsb->AddConnectedPlayerInfo(_characterInfo);

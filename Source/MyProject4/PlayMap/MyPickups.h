@@ -44,6 +44,9 @@ public:
 	UFUNCTION(Server, Reliable)
 		void RestoreSelf();
 
+	UFUNCTION(NetMulticast, Reliable)
+		void RestoreSelf_Multi();
+
 	//Make these into private type later. public for debug
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 		float _effectTime;

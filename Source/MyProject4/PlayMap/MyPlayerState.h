@@ -38,7 +38,7 @@ public:
 		TArray<class AMyPickups*> _Inventory;
 
 
-	UPROPERTY(replicatedUsing = OnRep_InitializeColorAndNotifyConnection)
+	UPROPERTY(replicated,BlueprintReadWrite)
 	FCharacterInfo _characterInfo;
 
 	UPROPERTY(replicated)
@@ -52,11 +52,6 @@ public:
 	UFUNCTION(Server, Reliable)
 		void SetCharacterInfo_Server(const FCharacterInfo& info);
 
-	UFUNCTION(Server,Reliable,BlueprintCallable)
-	void OnRep_InitializeColorAndNotifyConnection();
-
-	UFUNCTION(NetMulticast, Reliable)
-		void OnRep_InitializeColorAndNotifyConnection_Multi();
 
 	UFUNCTION(Server, Reliable)
 		void NotifyConnection();

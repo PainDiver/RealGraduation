@@ -31,12 +31,6 @@ void UMyGameInstance::Init()
 {
 	_bIsMasterServer = false;
 
-	if (Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(HOST_MIGRATION, 0)))
-	{
-		UGameplayStatics::DeleteGameInSlot(HOST_MIGRATION, 0);
-	}
-	
-
 	IOnlineSubsystem* subsystem = IOnlineSubsystem::Get();
 	if (subsystem != nullptr)
 	{
@@ -586,14 +580,7 @@ void UMyGameInstance::CreateDedicatedServers(FString url)
 	{
 		_childProcess.Add(ProcHandle);
 	}
-	Attribute = "C:\\Users\\hyo29\\Desktop\\FirstStep\\GradProj\\MyProject4.uproject -log -server -SteamServerName = TwistRun -Port=" +FString::FromInt(childPort) +  "-QueryPort = "  + FString::FromInt(queryPort);
-	ProcHandle = FPlatformProcess::CreateProc(*ExecuterPathDebug, *Attribute, true, false, false, &OutProcessID, 0, nullptr, nullptr);
-	if (ProcHandle.IsValid())
-	{
-		_childProcess.Add(ProcHandle);
-	}
-	
-	
+
 }
 
 void UMyGameInstance::InitializeBranch(const FString& WebServerIP)
@@ -602,16 +589,9 @@ void UMyGameInstance::InitializeBranch(const FString& WebServerIP)
 
 	request->OnProcessRequestComplete().BindUObject(this, &UMyGameInstance::OnBranchProcessComplete);
 	
-	if (WebServerIP.IsEmpty())
-	{
-		request->SetURL("http://115.21.133.38:8335/api/Host");
-		_webServerIP = "http://115.21.133.38:8335/";
-	}
-	else
-	{
-		request->SetURL(WebServerIP+"api/Host");
-		_webServerIP = WebServerIP;
-	}
+	request->SetURL(WebServerIP+"api/Host");
+	_webServerIP = WebServerIP;
+	
 	
 	request->SetVerb("GET");
 	request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
@@ -820,15 +800,16 @@ void UMyGameInstance::OnReadProcessRequestComplete(FHttpRequestPtr request, FHtt
 			TArray<TSharedPtr<FJsonValue>> jsonValue = jsonObject->GetArrayField(TEXT("Response"));
 			
 			FMasterServerData serverData = FMasterServerData();
-			jsonObject = jsonValue.Pop()->AsObject();
-
-			serverData._serverID = jsonObject->GetIntegerField("ServerID");
-			serverData._serverName = jsonObject->GetStringField("ServerName");
-			serverData._mapName = jsonObject->GetStringField("MapName");
-			serverData._IPAddress = jsonObject->GetStringField("IPAddress");
-			serverData._currentPlayers = jsonObject->GetIntegerField("CurrentPlayers");
-			serverData._maxPlayers = jsonObject->GetIntegerField("MaxPlayers");
-			
+			if (jsonValue.Num() >= 1)
+			{
+				jsonObject = jsonValue.Pop()->AsObject();
+				serverData._serverID = jsonObject->GetIntegerField("ServerID");
+				serverData._serverName = jsonObject->GetStringField("ServerName");
+				serverData._mapName = jsonObject->GetStringField("MapName");
+				serverData._IPAddress = jsonObject->GetStringField("IPAddress");
+				serverData._currentPlayers = jsonObject->GetIntegerField("CurrentPlayers");
+				serverData._maxPlayers = jsonObject->GetIntegerField("MaxPlayers");
+			}
 
 			//UE_LOG(LogTemp, Warning, TEXT("ServerID:%d"), serverData._serverID);
 			//UE_LOG(LogTemp, Warning, TEXT("SteamIP:%s"), *serverData._IPAddress);
@@ -844,12 +825,15 @@ void UMyGameInstance::OnReadProcessRequestComplete(FHttpRequestPtr request, FHtt
 	}
 	else
 	{
-
+		static FString addresses[4] = { "https://localhost:44333/","http://172.30.1.4:8335/" ,"http://192.168.35.82:8335/","http://172.30.1.43:8335/" };
+		static int num = 0;
+		if (num == 4)
+		{
+			return;
+		}
 		UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
-		ReadMasterServerInfo("https://localhost:44333/");
-		//ReadMasterServerInfo("http://172.30.1.4:8335/"); //  IP
-		//ReadMasterServerInfo("http://192.168.35.82:8335/"); // My Lan IP
-		//ReadMasterServerInfo("http://172.30.1.43:8335/"); 
+		ReadMasterServerInfo(addresses[num++]);
+
 	}
 
 
@@ -897,11 +881,14 @@ void UMyGameInstance::OnBranchProcessComplete(FHttpRequestPtr request, FHttpResp
 	}
 	else
 	{
-			UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
-			InitializeBranch("https://localhost:44333/");
-			//InitializeBranch("http://172.30.1.4:8335/"); // My Lan IP
-			//InitializeBranch("http://192.168.35.82:8335/"); // My Lan IP
-			//InitializeBranch("http://172.30.1.43:8335/"); // My Lan IP
+		static FString addresses[4] = { "https://localhost:44333/","http://172.30.1.4:8335/" ,"http://192.168.35.82:8335/","http://172.30.1.43:8335/" };
+		static int num = 0;
+		if (num == 4)
+		{
+			return;
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Http Read Request Failed"));
+		InitializeBranch(addresses[num++]);
 	}
 }
 

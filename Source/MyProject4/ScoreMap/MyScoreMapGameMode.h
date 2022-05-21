@@ -29,6 +29,9 @@ public:
 
 	virtual void Logout(AController* Exiting);
 
+	UFUNCTION(BlueprintCallable)
+	int GetServerPort();
+	
 
 	class AMyScoreMapGameStateBase* _gameState;
 	class UMyGameInstance* _gameInstance;

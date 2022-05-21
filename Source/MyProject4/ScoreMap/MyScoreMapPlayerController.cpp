@@ -23,8 +23,10 @@ AMyScoreMapPlayerController::AMyScoreMapPlayerController()
 void AMyScoreMapPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	InputComponent->BindAction(TEXT("Chat"), IE_Pressed, this, &AMyScoreMapPlayerController::ShowChattingPannel);
-
+	if (InputComponent)
+	{
+		InputComponent->BindAction(TEXT("Chat"), IE_Pressed, this, &AMyScoreMapPlayerController::ShowChattingPannel);
+	}
 }
 
 
@@ -32,45 +34,22 @@ void AMyScoreMapPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	Initialize();
-	
-	FTimerHandle delayTimer;
-
-
-
-	GetWorldTimerManager().SetTimer(delayTimer, FTimerDelegate::CreateLambda([&]()
-		{
-			Cast<AMyScoreMapGameStateBase>(UGameplayStatics::GetGameState(GetWorld()))->FindAllPlayerControllerHideAllWidget();
-			bBlockInput = true;
-			Cast<UMyGameInstance>(GetGameInstance())->_winner.Empty();
-		}
-	), 10, false);
-
+	UE_LOG(LogTemp, Warning, TEXT("ScorePlayerController Spawned"));
 }
 
 void AMyScoreMapPlayerController::PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel)
 {
-	if (IsLocalPlayerController())
-	{
-		TArray<UUserWidget*> widgets;
-		UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), widgets, UUserWidget::StaticClass());
-
-		for (auto widget : widgets)
-		{
-			widget->RemoveFromParent();
-		}
-	}
 	Super::PreClientTravel(PendingURL, TravelType, bIsSeamlessTravel);
 }
 
 
 void AMyScoreMapPlayerController::Initialize()
 {
-	AGameStateBase* gameState = UGameplayStatics::GetGameState(GetWorld());
 	_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
 
 	if (IsLocalPlayerController())
 	{
-		if (_gameInstance->_chattingHUDAsset)
+		if (_gameInstance &&_gameInstance->_chattingHUDAsset)
 		{
 			if (!_ChattingHUDOverlay)
 			{
@@ -82,7 +61,7 @@ void AMyScoreMapPlayerController::Initialize()
 				_chattingPannel = _ChattingHUDOverlay->GetRootWidget();
 			}
 		}
-		if (_gameInstance->_scoreHUDAsset)
+		if (_gameInstance && _gameInstance->_scoreHUDAsset)
 		{
 			if (!_ScoreHUDOverlay)
 			{
@@ -109,17 +88,20 @@ void AMyScoreMapPlayerController::DrawFromServerInstance_Implementation()
 
 void AMyScoreMapPlayerController::DrawWinners_Implementation(const int& number,const FString& characterInfo, const FLinearColor& meshColor)
 {
+	
 	UTextBlock* NewTextBlock = NewObject<UTextBlock>();
+	
+	//NewTextBlock->Font.FontMaterial = _font;
 	NewTextBlock->Font.Size = 25;
-	NewTextBlock->SetText(FText::FromString(FString("\t")+FString::FromInt(number + 1) + FString("\t\t\t\t\t") + characterInfo));
+	NewTextBlock->SetText(FText::FromString(FString("\t   ")+FString::FromInt(number + 1) + FString("\t\t\t\t\t\t\t\t\t\t                      ") + characterInfo));
+	
+
 	if (_WinnerScrollBox)
 	{
 		_WinnerScrollBox->AddChild(NewTextBlock);
 	}
 	if (number < 3)
 	{
-		if (GEngine)
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, TEXT("dummy spawned!"));
 		auto actor = GetWorld()->SpawnActor<AActor>(_Dummy, _Steps[number], FRotator(0, 0, 0), FActorSpawnParameters());
 		FLinearColor matColor;
 		auto mesh = actor->FindComponentByClass(USkeletalMeshComponent::StaticClass());
@@ -156,15 +138,20 @@ void AMyScoreMapPlayerController::ShowChatBox()
 		}
 	}
 
-	_chattingPannel->GetCachedWidget()->SetRenderOpacity(1);
+	if (_chattingPannel)
+	{
+		auto cachedWidget = _chattingPannel->GetCachedWidget();
+		if (cachedWidget)
+		{
+			cachedWidget->SetRenderOpacity(1);
+		}
+	}
 }
 
 
 
 void AMyScoreMapPlayerController::commit_Implementation(const FString& message)
 {
-	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, TEXT("Commit in ScoreMpa!"));
 
 	if (!message.IsEmpty())
 	{
@@ -186,14 +173,23 @@ void AMyScoreMapPlayerController::commit_Implementation(const FString& message)
 
 	GetWorldTimerManager().SetTimer(_timerHandle, FTimerDelegate::CreateLambda([&]()
 		{
-			_chattingPannel->GetCachedWidget()->SetRenderOpacity(_chattingPannel->GetCachedWidget()->GetRenderOpacity() - 0.05);
-			if (_chattingPannel->GetCachedWidget()->GetRenderOpacity() < 0)
+			if (_chattingPannel)
+			{
+				auto cachedWidget = _chattingPannel->GetCachedWidget();
+				if (cachedWidget)
+				{
+					cachedWidget->SetRenderOpacity(cachedWidget->GetRenderOpacity() - 0.05);
+					if (cachedWidget->GetRenderOpacity() < 0)
+					{
+						GetWorldTimerManager().ClearTimer(_timerHandle);
+					}
+				}
+			}
+			else
 			{
 				GetWorldTimerManager().ClearTimer(_timerHandle);
 			}
 		}), 0.3, true, 0.3);
-
-
 }
 
 

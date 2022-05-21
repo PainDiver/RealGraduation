@@ -60,6 +60,13 @@ public:
 	UFUNCTION(Server,Reliable,BlueprintCallable)
 	void NotifyFin();
 
+	UFUNCTION(Server, Reliable)
+		void StopAllController_Server();
+
+	UFUNCTION(NetMulticast, Reliable)
+		void StopAllController_Multi();
+
+
 	
 	UFUNCTION(Server, Reliable)
 		void LetPlayerMove();

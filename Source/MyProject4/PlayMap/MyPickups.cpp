@@ -90,7 +90,9 @@ void AMyPickups::Activate_Implementation()
 	{
 	case EPickUpType::EPT_Booster:
 	{
-		_character->GetCharacterMovement()->MaxWalkSpeed += _effect;
+		
+		_character->SetSpeed_Server(_effect);
+
 		GetWorld()->GetTimerManager().SetTimer(_timerHandle, FTimerDelegate::CreateUObject(this, &AMyPickups::RestoreSelf), 10.f, false);
 		UE_LOG(LogTemp, Warning, TEXT("%f"), _character->GetCharacterMovement()->MaxWalkSpeed);
 		break;
@@ -126,23 +128,31 @@ void AMyPickups::Activate_Implementation()
 	}
 }
 
+
 void AMyPickups::RestoreSelf_Implementation()
 {
+	RestoreSelf_Multi();
+}
+
+void AMyPickups::RestoreSelf_Multi_Implementation()
+{
 	_character = GetOwner<AMyCharacter>();
+	if (!_character)
+	{
+		return;
+	}
 
 	switch (_ePickUpType)
 	{
 	case EPickUpType::EPT_Booster:
 	{
-		_character->GetCharacterMovement()->MaxWalkSpeed -= _effect;
+		_character->SetSpeed_Server(-_effect);
 		break;
 	}
 	default:
 		break;
 	}
 	GetWorldTimerManager().ClearTimer(_timerHandle);
-	
+
 	Destroy();
 }
-
-
