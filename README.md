@@ -1,5 +1,5 @@
 # RealGraduation
-인천대학교 졸업작품 TwistRun
+인천대학교 졸업작품 은상 수상작 TwistRun
 
 외계행성에서 온 말랑이들이 벌이는 경쟁 레이싱 게임 TwistRun입니다.
 
